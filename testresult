@@ -1,0 +1,70 @@
+Labs 2 and 3 score for team kimbjork-pintjuk
+
+Number of categories passed: 24/34
+Normalized score (scale of 30 points): 21.176471
+
+Detailed feedback:
+In category Lexer: positions:
+Description: test that positions of tokens are correct
+Expected verdict: valid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: Wrong output on '--tokens'.
+
+In category Lexer: intliterals:
+Description: tests for integer literals
+Expected verdict: valid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: Wrong output on '--tokens'.
+
+In category Lexer: identifiers:
+Description: identifiers
+Expected verdict: valid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: Wrong output on '--tokens'.
+Expected verdict: invalid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: You marked the program as 'valid'.
+
+In category Lexer: tokens-not-in-separate-lines:
+Description: test that each token is printed on a separate line
+Expected verdict: valid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: Wrong output on '--tokens'.
+
+In category Lexer: comments:
+Description: tests for comments
+Expected verdict: valid
+   Report summary:
+   Failed 2 out of 2 tests.
+      On 2 tests: Wrong output on '--tokens'.
+Expected verdict: invalid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: You marked the program as 'valid'.
+
+In category Parser: mainmethod:
+Description: tests about the main declaration
+Expected verdict: invalid
+   Report summary:
+   Failed 2 out of 6 tests.
+      On 2 tests: You marked the program as 'valid'.
+
+In category Lexer: no-newline-at-eof:
+Description: special test that the case 'no newline at the end of
+file' is handled correctly
+Expected verdict: valid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: Wrong output on '--tokens'.
+
+In category Lexer: general:
+Description: general tests (various tokens)
+Expected verdict: invalid
+   Report summary:
+   Failed 1 out of 1 tests.
+      On 1 tests: You marked the program as 'valid'.

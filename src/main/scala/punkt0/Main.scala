@@ -86,7 +86,7 @@ object Main {
         //println("\t" + t);
         println(t);
       }
-      sys.exit(0);
+      return 
     }else{
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
       if(ctx.doAST){

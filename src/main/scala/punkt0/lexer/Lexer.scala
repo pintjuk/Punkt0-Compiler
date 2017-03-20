@@ -33,25 +33,18 @@ object Lexer extends Phase[File, Iterator[Token]] {
 
   def run(f: File)(ctx: Context): Iterator[Token] = {
     val source = scala.io.Source.fromFile(f)
-    
     new Iterator[Token] {
-
       def hasNext = {
         source.nonEmpty
       }
-
       def next: Token = {
-        
-      val pos = source.pos;
-      
-      if(!source.nonEmpty) return registerPosition(new Token(EOF))          
-   
-      def registerPosition(t : Token): Token = {
-        t.setPos(ctx.file.get,pos);
-        t;
-      }
-       source.ch match{
-	  
+        val pos = source.pos;
+        if(!source.nonEmpty) return registerPosition(new Token(EOF))
+        def registerPosition(t : Token): Token = {
+          t.setPos(ctx.file.get,pos);
+          t;
+        }
+        source.ch match{
           case '(' => source.next; registerPosition(new Token(LPAREN));
           case ')' => source.next; registerPosition(new Token(RPAREN));
           case ':' => source.next; registerPosition(new Token(COLON));
@@ -81,14 +74,9 @@ object Lexer extends Phase[File, Iterator[Token]] {
               return this.next;
             }
             else if(source.ch=='*') {
-              var itter=0;
               do {
-                itter=itter+1;
-                if(itter > 10)
-                   sys.exit(0);
                 source.takeWhile( x => x!='*').mkString
-                if(!source.nonEmpty)
-         	  return registerPosition(new Token(EOF))      
+                if(!source.nonEmpty) return registerPosition(new Token(BAD))      
                 source.next
               }while(source.ch!='/');
               source.next;
@@ -135,7 +123,7 @@ object Lexer extends Phase[File, Iterator[Token]] {
                registerPosition(keywords.getOrElse(result, new ID(result)))
             }else {source.next; registerPosition(new Token(BAD))}
           }
-	}
+        }
       }
     }
   }
