@@ -435,7 +435,9 @@ object Parser extends Phase[Iterator[Token], Program] {
     def parseGoal: Program = {
       var classes:  List[ClassDecl] = List();
       while(currentToken.kind==CLASS) classes :+= parseClassDecl;
-      return new Program(parseMainDecl, classes); 
+      val res = new Program(parseMainDecl, classes);
+      eat(EOF);
+      return res;
     }
 
     readToken

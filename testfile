@@ -1,4 +1,5 @@
-01aeou
+0000001234aeou
+00
 object main extends app {
   var hej:Int=00;
   null

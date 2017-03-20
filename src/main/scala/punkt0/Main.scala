@@ -80,7 +80,7 @@ object Main {
     if(ctx.doTokens){
       val tokenIter = Lexer.run(ctx.file.get)(ctx);
       var break=false;
-      while(!break){
+      while(tokenIter.hasNext){
         val t = tokenIter.next;
         val str = t.posString;
         //print(str);

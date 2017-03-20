@@ -34,8 +34,15 @@ object Lexer extends Phase[File, Iterator[Token]] {
   def run(f: File)(ctx: Context): Iterator[Token] = {
     val source = scala.io.Source.fromFile(f)
     new Iterator[Token] {
+      var empty=false;
       def hasNext = {
-        source.nonEmpty
+        if(source.nonEmpty){
+          true;
+        }
+        else{
+          if(!empty) { empty = true; true;}
+          else false;
+        }
       }
       def next: Token = {
         val pos = source.pos;
@@ -115,6 +122,10 @@ object Lexer extends Phase[File, Iterator[Token]] {
                var result = 0;
                var numDigits =0;
                val loop = new Breaks;
+               if(v=='0'){
+                 source.next;
+                 return registerPosition(new INTLIT(0));
+               }
                loop.breakable{
                  while(source.ch.isDigit ){
                    numDigits=numDigits+1;
