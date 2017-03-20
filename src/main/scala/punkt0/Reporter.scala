@@ -6,6 +6,9 @@ import scala.io.Source
 object Reporter {
 
   var errors = false
+  def reset(){
+    errors=false;
+  }
 
   def info(msg: Any, pos: Positioned = NoPosition): Unit =
     report(pos, "info", msg.toString)

@@ -61,6 +61,22 @@ object Main {
     println(" --ast			prints out the AST")
   }
 
+  def mkTokens(ctx:Context):String = {
+    val tokenIter = Lexer.run(ctx.file.get)(ctx);
+    var res="";
+    while(tokenIter.hasNext){
+      val t = tokenIter.next;
+      val str = t.posString;
+      res += t+"("+t.line+":"+t.column+")"+"\n";
+    }
+    return res;
+  }
+
+  def printTokens(ctx:Context):Unit = {
+    print(mkTokens(ctx))
+    Reporter.terminateIfErrors();
+  }
+
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args)
    // println(ctx);
@@ -78,18 +94,8 @@ object Main {
     
     
     if(ctx.doTokens){
-      val tokenIter = Lexer.run(ctx.file.get)(ctx);
-      var break=false;
-      while(tokenIter.hasNext){
-        val t = tokenIter.next;
-        val str = t.posString;
-        //print(str);
-        //println("\t" + t);
-        println(t+"("+t.line+":"+t.column+")");
-        if(t.kind==EOF) break=true;
-      }
-      Reporter.terminateIfErrors();
-      return 
+      printTokens(ctx);
+      return
     }else{
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
       if(ctx.doAST){

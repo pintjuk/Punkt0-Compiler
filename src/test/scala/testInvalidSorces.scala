@@ -5,6 +5,8 @@ import java.io._
 import punkt0._
 import ast._
 import lexer._
+
+
 class rutTestPrograms extends FlatSpec {
 
   def getListOfFiles(dir: String):List[File] = {
@@ -15,9 +17,23 @@ class rutTestPrograms extends FlatSpec {
       List[File]()
     }
   }
-  
+
+
+ for(filename <- getListOfFiles("testprograms/lab2/invalid")){
+    filename.toString should "throw  RuntimeException when lexed " in{
+      var ctx = Context()
+      ctx = ctx.copy(doAST = true)
+      ctx = ctx.copy(file = Some( filename))
+      assertThrows[RuntimeException] {
+        Main.printTokens(ctx);
+      }
+      Reporter.reset;
+    }
+ }
+
   for(filename <- getListOfFiles("testprograms/lab3/invalid")){
     filename.toString should "throw  RuntimeException when parsed " in{
+      Reporter.reset;
       var ctx = Context()
       ctx = ctx.copy(doAST = true)
       ctx = ctx.copy(file = Some( filename))
@@ -27,7 +43,24 @@ class rutTestPrograms extends FlatSpec {
     }
   }
  }
- 
+
+  for(filename <- List(
+    "testprograms/lab2/valid/crazyids.p0",
+    "testprograms/lab2/valid/positions.p0"
+    )){
+    Reporter.reset;
+    "tockens of "+filename should "should be equal to"+ filename.dropRight(2)+"check" in{
+      var ctx = Context().copy(file = Some(new File( filename)))
+      val tokens = Main.mkTokens(ctx);
+      Reporter.terminateIfErrors
+      val tokensCheck = scala.io.Source.fromFile(new File(filename.dropRight(2)+"check")).mkString;
+      println(tokens);
+      println(tokensCheck);
+      assert(tokens.stripLineEnd === tokensCheck.stripLineEnd);
+    }
+
+  }
+  Reporter.reset;
  for(filename <- List(
     "testprograms/lab3/valid/99bottles.p0",
     "testprograms/lab3/valid/BinarySearch.p0",
@@ -50,6 +83,8 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/lab3/valid/VehicleRent.p0"
   )){
    
+  
+    Reporter.reset;
     "ast of "+filename should "should be equal "+ filename+".ast" in{
       var ctx = Context()
       ctx = ctx.copy(doAST = true)
@@ -59,8 +94,11 @@ class rutTestPrograms extends FlatSpec {
       val ourAst = tree.toString;
       println(ourAst);
       println(correctAst);
-      assert(ourAst.replaceAll("\\s+","")===correctAst.replaceAll("\\s+",""));
+      assert(ourAst.replaceAll("\\s+","") === correctAst.replaceAll("\\s+",""));
     }
+
+
+    Reporter.reset;
 
     "ast of prity print of "+filename should "equal its ast" in{
       var ctx = Context()
