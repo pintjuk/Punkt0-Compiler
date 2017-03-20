@@ -79,13 +79,16 @@ object Main {
     
     if(ctx.doTokens){
       val tokenIter = Lexer.run(ctx.file.get)(ctx);
-      while(tokenIter.hasNext){
+      var break=false;
+      while(!break){
         val t = tokenIter.next;
         val str = t.posString;
         //print(str);
         //println("\t" + t);
-        println(t);
+        println(t+"("+t.line+":"+t.column+")");
+        if(t.kind==EOF) break=true;
       }
+      Reporter.terminateIfErrors();
       return 
     }else{
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);

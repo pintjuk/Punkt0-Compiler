@@ -25,7 +25,7 @@ object Lexer extends Phase[File, Iterator[Token]] {
                     "if" -> new Token(IF),
                     "else" -> new Token(ELSE),
                     "true" -> new Token(TRUE),
-  		    "false" -> new Token(FALSE),
+                    "false" -> new Token(FALSE),
                     "this" -> new Token(THIS),
                     "null" -> new Token(NULL),
                     "new" -> new Token(NEW),
@@ -59,10 +59,10 @@ object Lexer extends Phase[File, Iterator[Token]] {
           case '}' => source.next; registerPosition(new Token(RBRACE));
           case '&' => source.next; if(source.ch=='&'){source.next;
                                                       registerPosition(new Token(AND))}
-                                   else              {registerPosition(new Token(BAD))}
+                                   else              {val res=registerPosition(new Token(BAD)); error("Syntax error!", res); res}
           case '|' => source.next; if(source.ch=='|'){source.next;
                                                       registerPosition(new Token(OR))}
-                                   else              {registerPosition(new Token(BAD))}
+                                   else              {val res=registerPosition(new Token(BAD)); error("Syntax error!", res); res}
           case '<' => source.next; registerPosition(new Token(LESSTHAN));
           case '+' => source.next; registerPosition(new Token(PLUS));
           case '-' => source.next; registerPosition(new Token(MINUS));
@@ -76,7 +76,7 @@ object Lexer extends Phase[File, Iterator[Token]] {
             else if(source.ch=='*') {
               do {
                 source.takeWhile( x => x!='*').mkString
-                if(!source.nonEmpty) return registerPosition(new Token(BAD))      
+                if(!source.nonEmpty) {val res= registerPosition(new Token(BAD)); error("Syntax error!", res); return res}      
                 source.next
               }while(source.ch!='/');
               source.next;
@@ -87,15 +87,24 @@ object Lexer extends Phase[File, Iterator[Token]] {
             }
           }
           case '\"' =>{
-             val result = registerPosition(new STRLIT( source.takeWhile( (x) => x!='\"' ).mkString));
-             if(source.ch=='\"'){
+            val result = registerPosition(new STRLIT( source.takeWhile( (x) => x!='\"' ).mkString));
+            if(source.ch=='\"'){
                source.next;
                return result;
-             }
-             else{
-               if(!source.nonEmpty) return registerPosition(new Token(BAD))
-               else {source.next; return registerPosition(new Token(BAD))}
-             }
+            }
+            else{
+              if(!source.nonEmpty) {
+                val res = registerPosition(new Token(BAD));
+                error("Syntax error!", res); 
+                return  res;
+              }
+              else {
+                source.next; 
+                val res = registerPosition(new Token(BAD)); 
+                error("Syntax error!", res);
+                return res;
+              }
+            }
           }
           case v => {
             if( source.ch.isControl || source.ch.isSpaceChar || source.ch.isWhitespace ){
@@ -116,12 +125,12 @@ object Lexer extends Phase[File, Iterator[Token]] {
                }
                // TODO: Error check that int does not overflow
                //source.next;
-               if(v=='0' && numDigits > 1) { registerPosition(new Token(BAD)) } 
+               if(v=='0' && numDigits > 1) { val res = registerPosition(new Token(BAD)) ; error("Syntax error!", res); res} 
                else {registerPosition(new INTLIT(result))};
             }else if(v.isLetter){
                val result = v.toString + source.takeWhile( (x) => x.isLetter || x.isDigit || x=='_').mkString
                registerPosition(keywords.getOrElse(result, new ID(result)))
-            }else {source.next; registerPosition(new Token(BAD))}
+            }else {source.next; val res= registerPosition(new Token(BAD)); error("Syntax error!", res); res}
           }
         }
       }
