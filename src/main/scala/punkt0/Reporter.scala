@@ -21,7 +21,8 @@ object Reporter {
 
   def fatal(msg: Any, pos: Positioned = NoPosition): Nothing = {
     report(pos, "fatal", msg.toString)
-    sys.exit(1)
+    throw new RuntimeException;
+    //sys.exit(1)
   }
 
   private def err(msg: String): Unit = {
@@ -30,7 +31,8 @@ object Reporter {
 
   def terminateIfErrors(): Unit = if (errors) {
     err("Errors reported.")
-    sys.exit(1)
+    throw new RuntimeException;
+    //sys.exit(1)
   }
 
   private def report(pos: Positioned, prefix: String, msg: String): Unit =

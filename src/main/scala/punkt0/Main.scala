@@ -3,14 +3,29 @@ package punkt0
 import java.io.File
 
 import lexer._
+import ast._
 
 
 object Main {
+
+
 
   def processOptions(args: Array[String]): Context = {
     var ctx = Context()
 
     def processOption(args: List[String]): Unit = args match {
+      case "--tokens" :: args =>
+        ctx = ctx.copy(doTokens = true)
+        processOption(args)
+       
+      case "--print" :: args =>
+      	ctx = ctx.copy(doPrintMain = true)
+      	processOption(args)
+      	
+      case "--ast" :: args =>
+      	ctx = ctx.copy(doAST = true)
+      	processOption(args) 
+        
       case "--help" :: args =>
         ctx = ctx.copy(doHelp = true)
         processOption(args)
@@ -32,7 +47,7 @@ object Main {
       displayHelp()
       sys.exit(0)
     }
-
+	
     ctx
   }
 
@@ -41,12 +56,46 @@ object Main {
     println("Options include:")
     println(" --help        displays this help")
     println(" -d <outdir>   generates class files in the specified directory")
+    println(" --tokens 		displays tokes")
+    println(" --print		prints the parsed program")
+    println(" --ast			prints out the AST")
   }
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args)
-
-    // TODO: run lexer phase
+   // println(ctx);
+    
+    //move later?
+    if(ctx.file == None){
+      println("no file");
+      sys.exit(1);
+    }
+    
+          // case class If(expr: ExprTree, thn: ExprTree, els: Option[ExprTree])
+    // val str = Printer.apply(new Trees.If(new Trees.Not(new Trees.IntLit(12)), new Trees.Assign(new Trees.Identifier("value"),new Trees.Plus(new Trees.IntLit(3), new Trees.IntLit(2))), null));
+    // println(str);
+    // val program = Parser.run(tokenIter)(ctx);
+    
+    
+    if(ctx.doTokens){
+      val tokenIter = Lexer.run(ctx.file.get)(ctx);
+      while(tokenIter.hasNext){
+        val t = tokenIter.next;
+        val str = t.posString;
+        //print(str);
+        //println("\t" + t);
+        println(t);
+      }
+      sys.exit(0);
+    }else{
+      val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
+      if(ctx.doAST){
+        println(tree);
+      }
+      if(ctx.doPrintMain){
+        println(Printer.apply(tree));
+      }
+    }
   }
 
 }

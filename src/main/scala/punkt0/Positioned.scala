@@ -12,7 +12,7 @@ object Positioned {
     (pos >> COLUMN_BITS) & LINE_MASK
 
   def columnOf(pos: Int): Int =
-    pos & COLUMN_MASK
+    pos & COLUMN_MASK 
 }
 
 trait Positioned {
