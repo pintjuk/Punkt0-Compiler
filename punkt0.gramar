@@ -1,0 +1,114 @@
+
+.follow(Program) = {}
+.first(Program) = {class}
+Program 	::= 	( ClassDeclaration ) * MainDeclaration
+
+.follow(ClassDeclaration) = {class} is this a problem?
+.first(ClassDeclaration) = {class}
+ClassDeclaration 	::= 	class Identifier ( extends Identifier )? { ( VarDeclaration ; ) * ( MethodDeclaration ) * }
+
+.follow(MainDeclaration) = {}
+.first(MainDeclaration) = {object}
+MainDeclaration 	::= 	object Identifier extends Identifier { ( VarDeclaration ;) * Expression ( ; Expression ) * }
+
+.follow(VarDeclaration) = {; } ++ follow(Expresion) is this a problem?
+.first(VarDeclaration) = {var}
+VarDeclaration 	::= 	var Identifier : Type = Expression ;
+
+.follow(MethodDeclaration) = {override, def , } } is this a problem?
+.first(MethodDeclaration) = {override, def}
+MethodDeclaration 	::= 	( override )? def Identifier ( ( Identifier : Type ( , Identifier : Type ) * )? ) : Type = { ( VarDeclaration ; ) * Expression ( ; Expression ) * }
+
+.follow(Type) = {=,  <comma> , ) }
+.first(Type) = {Boolean, Int, String, Unit, <Identifier>}
+Type 	::= 	Boolean
+		Int
+		String
+		Unit
+		Identifier
+
+.follow(OrList) =  { }, ;, ), else, || }
+.first(OrList) = {||}
+OrList	::= 	|| OrTerm Orlist
+        	<epsilon>
+
+.follow(OrTerm) =  { }, ;, ), else, <,==, || }
+.first(OrTerm) = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+OrTerm	::=	AndTerm AndList
+
+.follow(AndList) =  { }, ;, ), else, <,==, || }
+.first(AndList) = { && }
+AndList	::=	&& AndTerm AndList
+                <epsilon>
+
+.follow(AndTerm) =  { }, ;, ), else, <,==, &&, || }
+.first(AndTerm) = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+AndTerm ::=	CompTerm CompList
+
+
+.follow(CompList)= { }, ;, ), else, &&, || }
+.first(CompList) = {<, ==}
+CompList	::=	< CompTerm CompList
+                	== CompTerm CompList
+                	<epsilon>
+
+.follow(CompTerm) = { }, ;, ), else, <,==, &&, || }
+.first(CompTerm) = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+CompTerm 	::=	Term TermList
+
+.follow(FactorList)= { }, ;, ), else, <,==, &&, || }
+.first(TermList) = {+, -}
+TermList	::=	+ Term TermList
+                        - Term TermList
+			<epsilon>
+
+.follow(Term)= { }, ;, ), else, +, -, <,==, &&, || }
+.first(Term) = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+Term	::=	Factor FactorList
+
+.follow(FactorList)= { }, ;, ), else, +, -, <,==, &&, || }
+.first(FactorList) = {*, /}
+FactorList	::= 	* Factor FactorList
+			/ Factor FactorList
+			<epsilon>
+
+.follow(Factor) = { }, ;, ), else, *, /, +, -, <,==, &&, || }
+.first(Factor) = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+Factor	::= 	Thing
+           	!Thing
+
+
+.follow(Thing)= { }, ;, ), else, *, /, +, -, <,==, &&, || }
+.first(Thing) = { true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+Thing	::=	true MaybAccess
+		false MaybAccess
+		Identifier IdentOrAssign
+		this MaybAccess
+		null MaybAccess
+		{ ( Expression ( ; Expression ) * )? } MaybAccess
+		if ( Expression ) Expression ( else Expression )?
+		while ( Expression ) Expression
+		println ( Expression ) MaybAccess
+		new Identifier ( ) MaybAccess
+		<INTEGER_LITERAL> MaybAccess
+		" <STRING_LITERAL>: " MaybAccess
+		(Expresion) MaybAccess
+
+.follow(MaybeAccess) = { }, ;, ), else, *, /, +, -, <,==, &&, || }
+.first(MaybeAccess) = { .,  }, ;, ), else, *, /, +, -, <,==, &&, || }
+MaybeAccess ::= 	. Identifier ( ( Expression ( , Expression ) * )? )
+			<epsilon>
+
+.follow(IdentOrAssign) = { . ,  }, ;, ), else, *, /, +, -, <,==, &&, ||   }
+.first(IdentOrAssign) = { =, .,  }, ;, ), else, *, /, +, -, <,==, &&, ||}
+IdentOrAssign	::= 	= Expresion
+			  Maybeaccess
+
+.follow(Expresion) = { }, ;, ), else, *, /, +, -, <,==, &&, || }
+.first(Expresion)  = {!, true, false,<Identefier>, this, null, {, if, while, println, new, <INTEGER_LITERAL>, ", ( }
+Expression 	::=     OrTerm OrList			
+			
+			
+.follow(identefier) = {extends}
+.first(identefier) = {<IDENTIFIER>}
+Identifier 	::= 	<IDENTIFIER>
