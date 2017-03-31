@@ -36,7 +36,8 @@ object Symbols {
     var mainClass: ClassSymbol = _
     var classes = Map[String, ClassSymbol]()
 
-    def lookupClass(n: String): Option[ClassSymbol] = ???
+    def lookupClass(n: String): Option[ClassSymbol] = classes get n
+
   }
 
   class ClassSymbol(val name: String) extends Symbol {
@@ -44,8 +45,21 @@ object Symbols {
     var methods = Map[String, MethodSymbol]()
     var members = Map[String, VariableSymbol]()
 
-    def lookupMethod(n: String): Option[MethodSymbol] = ???
-    def lookupVar(n: String): Option[VariableSymbol] = ???
+    def lookupMethod(n: String): Option[MethodSymbol] = methods get n match {
+      case None => parent match { 
+        case Some(x) => x.lookupMethod(n)
+        case None => None
+      }
+      case x    => x
+    }
+
+    def lookupVar(n: String): Option[VariableSymbol] = members get n match {
+      case None => parent match { 
+        case Some(x) => x.lookupVar(n)
+        case None => None  
+      }
+      case x    => x
+    }
   }
 
   class MethodSymbol(val name: String, val classSymbol: ClassSymbol) extends Symbol {
@@ -54,7 +68,10 @@ object Symbols {
     var argList: List[VariableSymbol] = Nil
     var overridden: Option[MethodSymbol] = None
 
-    def lookupVar(n: String): Option[VariableSymbol] = ???
+    def lookupVar(n: String): Option[VariableSymbol] = members get n match {
+      case None => params get n
+      case x    => x
+    }
   }
 
   class VariableSymbol(val name: String) extends Symbol

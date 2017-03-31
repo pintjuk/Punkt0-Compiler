@@ -9,43 +9,82 @@ object NameAnalysis extends Phase[Program, Program] {
   def run(prog: Program)(ctx: Context): Program = {
     import Reporter._
     // Step 1: Collect symbols in declarations
-    var globalScope = new Symbols.GlobalScope;
+    var globalScope = new Symbols.GlobalScope
+
     def collectClasses(cl: ClassDecl){
-		var classSym = new Symbols.ClassSymbol(cl.id.value)
-		cl.setSymbol(classSym)
-		globalScope.classes += (cl.id.value -> classSym)
-		cl.methods.map(x => collectMethods(x,classSym))
-		cl.vars.map(x => collectMembers(x,classSym))
+		  var classSym = new Symbols.ClassSymbol(cl.id.value).setPos(cl)
+		  cl.setSymbol(classSym)
+      
+      globalScope.methods get cl.id.value match{
+        case None     =>  globalScope.classes += (cl.id.value -> classSym)
+        case Some(x)  =>  error( " class " + cl.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",cl);
+
+      }
+		  //cl.methods.map(x => collectMethods(x,classSym))
+		  //cl.vars.map(x => collectMembers(x,classSym))
   	}
+
+    def linkClassParrents(cl: ClassDecl){
+      cl.parent match{
+        case None     => {}
+        case Some(x)  => globalScope.lookupClass(x) match {
+          case None               => error("class "+ x.value + "is undefiend", x);
+          case Some(parSymbol)  => cl.parent=parSymbol;
+      
+        }
+      }
+    }
+
+    def doYouLoop(cl: ClassDecl){
+      var chain: List[ClassSymbol]
+      var curret_class=Some(cl.getSymbol)
+      while(current_class==Some(_)){
+        if(chain.contains(current_class.get))
+          error("llegal cyclic reference involving class"+cl.id.name, cl)
+        else{
+          chain :+= current_class.get;
+          current_class=current_class.get.parent;
+        }
+      }
+    }
+
+
   	def collectMethods(meth: MethodDecl, classScope: ClassSymbol){
-  		var methSym = new Symbols.MethodSymbol(meth.id.value, classScope)
+  		var methSym = new Symbols.MethodSymbol(meth.id.value, classScope).setPos(meth)
   		meth.setSymbol(methSym)
-  		classScope.methods += (meth.id.value -> methSym)
-  		meth.args.map(x => collectArgs(x, methSym))
-  		meth.vars.map(x => collectVars(x, methSym))
+      classScope.methods get meth.id.value match{
+        case None => 	{
+          classScope.methods += (meth.id.value -> methSym)
+  		    meth.args.map(x => collectArgs(x, methSym))
+  		    meth.vars.map(x => collectVars(x, methSym))
+        }
+        case Some(x)    => error( " method " + meth.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",meth)
+      }
   	}
   	def collectMain(main: MainDecl){
-  		var classSym = new Symbols.ClassSymbol(main.obj.value)
+  		var classSym = new Symbols.ClassSymbol(main.obj.value).setPos(main)
   		main.setSymbol(classSym)
-  		globalScope.classes += (main.obj.value -> classSym)
+  		globalScope.mainClass =  classSym
   		main.vars.map(x => collectMembers(x, classSym))
   	}
   	def collectMembers(v: VarDecl, scope: ClassSymbol){
-  		var sym = new Symbols.VariableSymbol(v.id.value)
+  		var sym = new Symbols.VariableSymbol(v.id.value).setPos(v)
   		v.setSymbol(sym)
   		scope.members += (v.id.value -> sym)
   	}
   	def collectArgs(v: Formal, scope: MethodSymbol){
-  		var sym = new Symbols.VariableSymbol(v.id.value)
+  		var sym = new Symbols.VariableSymbol(v.id.value).setPos(v)
   		v.setSymbol(sym)
   		scope.members += (v.id.value -> sym)
   	}
   	def collectVars(v: VarDecl, scope: MethodSymbol){
-  		var sym = new Symbols.VariableSymbol(v.id.value)
+  		var sym = new Symbols.VariableSymbol(v.id.value).setPos(v)
   		v.setSymbol(sym)
   		scope.members += (v.id.value -> sym)
   	}
-  	prog.classes.map(x => collectClasses(x))
+  	prog.classes.map(x => collectClasses(x));
+    prog.classes.map(x => linkClassParrents(x));
+    prog.classes.map(x => doYouLoop(x));
   	collectMain(prog.main)
 
 

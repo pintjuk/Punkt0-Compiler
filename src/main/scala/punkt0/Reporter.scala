@@ -23,6 +23,13 @@ object Reporter {
     report(pos, "error", msg.toString)
   }
 
+  def error(msg1: Any, pos1: Positioned, msg2: Any, pos2: Positioned ): Unit = {
+    errors = true
+    report(pos1, "error", msg1.toString)
+    report(pos2, "", msg2.toString)
+  }
+
+
   def fatal(msg: Any, pos: Positioned = NoPosition): Nothing = {
     report(pos, "fatal", msg.toString)
 
