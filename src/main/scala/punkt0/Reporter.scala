@@ -4,6 +4,7 @@ import java.io.File
 import scala.io.Source
 
 object Reporter {
+  var testing=false;
 
   var errors = false
   def reset(){
@@ -24,8 +25,11 @@ object Reporter {
 
   def fatal(msg: Any, pos: Positioned = NoPosition): Nothing = {
     report(pos, "fatal", msg.toString)
-    //throw new RuntimeException;
-    sys.exit(1)
+
+    if(testing)
+      throw new RuntimeException;
+    else
+      sys.exit(1)
   }
 
   private def err(msg: String): Unit = {
@@ -34,8 +38,11 @@ object Reporter {
 
   def terminateIfErrors(): Unit = if (errors) {
     err("Errors reported.")
-    //throw new RuntimeException;
-    sys.exit(1)
+
+    if(testing)
+      throw new RuntimeException;
+    else
+      sys.exit(1)
   }
 
   private def report(pos: Positioned, prefix: String, msg: String): Unit =

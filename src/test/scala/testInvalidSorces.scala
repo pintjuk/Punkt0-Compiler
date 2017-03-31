@@ -8,7 +8,8 @@ import lexer._
 
 
 class rutTestPrograms extends FlatSpec {
-
+  Reporter.testing=true;
+  
   def getListOfFiles(dir: String):List[File] = {
     val d = new File(dir)
     if (d.exists && d.isDirectory) {
@@ -46,7 +47,8 @@ class rutTestPrograms extends FlatSpec {
 
   for(filename <- List(
     "testprograms/lab2/valid/crazyids.p0",
-    "testprograms/lab2/valid/positions.p0"
+    "testprograms/lab2/valid/positions.p0",
+    "testprograms/lab2/valid/endofline.p0"
     )){
     Reporter.reset;
     "tockens of "+filename should "should be equal to"+ filename.dropRight(2)+"check" in{

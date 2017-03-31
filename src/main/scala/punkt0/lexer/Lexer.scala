@@ -35,18 +35,23 @@ object Lexer extends Phase[File, Iterator[Token]] {
     val source = scala.io.Source.fromFile(f)
     new Iterator[Token] {
       var empty=false;
+      var parsedEOF=false;
       def hasNext = {
-        if(source.nonEmpty){
+        !parsedEOF;
+        /*if(source.nonEmpty){
           true;
         }
         else{
           if(!empty) { empty = true; true;}
           else false;
-        }
+        }*/
       }
       def next: Token = {
         val pos = source.pos;
-        if(!source.nonEmpty) return registerPosition(new Token(EOF))
+        if(!source.nonEmpty){ 
+          parsedEOF=true;
+          return registerPosition(new Token(EOF));
+        }
         def registerPosition(t : Token): Token = {
           t.setPos(ctx.file.get,pos);
           t;
