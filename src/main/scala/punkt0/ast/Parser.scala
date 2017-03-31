@@ -66,9 +66,10 @@ object Parser extends Phase[Iterator[Token], Program] {
       	  case v: ID => v.value
           case v => expected(IDKIND)
       	}
-      );
+      ).setPos(tempTock);
     }
     def parseClassDecl: ClassDecl= {
+      var pos:Positioned = currentToken;
       eat(CLASS);
       val id = parseIdentifier;
       var parent : Option[Identifier] = None;
@@ -89,17 +90,18 @@ object Parser extends Phase[Iterator[Token], Program] {
         methods :+= parseMethodDecl;
       }
       eat(RBRACE);
-      return new ClassDecl(id, parent, vars, methods);
+      return new ClassDecl(id, parent, vars, methods).setPos(pos);
     }
 
     def parseMainDecl: MainDecl = {
+      var pos:Positioned = currentToken;
       eat(OBJECT);
       val obj = parseIdentifier;
       eat(EXTENDS);
       val parent = parseIdentifier;
       val (vars, exprs, retExprs ) = parseMethodBody;
       //case class MainDecl(obj: Identifier, parent: Identifier, vars: List[VarDecl], exprs: List[ExprTree]) extends Tree
-      return new MainDecl(obj, parent, vars, exprs:::List(retExprs));
+      return new MainDecl(obj, parent, vars, exprs:::List(retExprs)).setPos(pos);
     }
 
     def parseMethodBody: (List[VarDecl], List[ExprTree], ExprTree) = {
@@ -124,8 +126,9 @@ object Parser extends Phase[Iterator[Token], Program] {
 
     def parseMethodDecl: MethodDecl = {
       var overrides=false;
+      var pos:Positioned = currentToken;
       currentToken.kind match {
-      	  case DEF 	=> eat(DEF);overrides=false;
+      	  case DEF 	=> eat(DEF); overrides=false; 
           case OVERRIDE => eat(OVERRIDE); overrides=true; eat(DEF)
           case v 	=> expected(DEF, OVERRIDE)
       }
@@ -137,14 +140,14 @@ object Parser extends Phase[Iterator[Token], Program] {
         val arg_name= parseIdentifier;
         eat(COLON);
         val arg_type = parseType
-        args :+= new Formal(arg_type, arg_name)
+        args :+= new Formal(arg_type, arg_name).setPos(arg_name)
 
 	      while(currentToken.kind != RPAREN){
-		eat(COMMA);
-		val arg_name= parseIdentifier;
-		eat(COLON);
-		val arg_type = parseType
-		args :+= new Formal(arg_type, arg_name)
+          eat(COMMA);
+          val arg_name= parseIdentifier;
+          eat(COLON);
+          val arg_type = parseType
+          args :+= new Formal(arg_type, arg_name).setPos(arg_name);
 	      }
       }
       eat(RPAREN);
@@ -152,32 +155,35 @@ object Parser extends Phase[Iterator[Token], Program] {
       val retType=parseType;
       eat(EQSIGN);
       val (vars, exprs, retExpr ) = parseMethodBody;
-      return new MethodDecl(overrides, retType, id, args, vars, exprs, retExpr); 
+      return new MethodDecl(overrides, retType, id, args, vars, exprs, retExpr).setPos(pos); 
     }
 
    
 
     def parseVarDecl: VarDecl = {
+      var pos:Positioned = currentToken;
       eat(VAR);
       val name = parseIdentifier;
       eat(COLON);
       val tpe = parseType;
       eat(EQSIGN);
       val expr = parseExpression;
-      return new VarDecl(tpe,name,expr); 
+      return new VarDecl(tpe,name,expr).setPos(pos); 
     }
     def parseType: TypeTree = {
+      var pos:Positioned = currentToken;
       currentToken.kind match {
-        case INT =>  { readToken; new IntType(); } 
-        case BOOLEAN =>{ readToken; new BooleanType(); }
-        case STRING => { readToken; new StringType();}
-        case UNIT => { readToken; new UnitType(); }
+        case INT =>  { readToken; new IntType().setPos(pos); } 
+        case BOOLEAN =>{ readToken; new BooleanType().setPos(pos); }
+        case STRING => { readToken; new StringType().setPos(pos);}
+        case UNIT => { readToken; new UnitType().setPos(pos); }
         case IDKIND => parseIdentifier
         case v => expected(INT, BOOLEAN, STRING,UNIT)
       }
     }
         
     def parseMaybeAccess(obj: ExprTree):ExprTree = {
+      var pos:Positioned = currentToken;
       if(currentToken.kind==DOT){
         eat(DOT)
         val meth=parseIdentifier;
@@ -190,11 +196,11 @@ object Parser extends Phase[Iterator[Token], Program] {
             args :+= parseExpression;
           }
           eat(RPAREN)
-         parseMaybeAccess (  new MethodCall(obj, meth,args));
+         parseMaybeAccess (  new MethodCall(obj, meth,args).setPos(pos));
         }
         else{
           eat(RPAREN);
-          parseMaybeAccess ( new MethodCall(obj, meth, List()));
+          parseMaybeAccess ( new MethodCall(obj, meth, List()).setPos(pos));
         }
       }
       else if(MaybeAccessFollowSet.contains(currentToken.kind)){
@@ -206,9 +212,10 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
     
     def IdentOrAssign ( id: Identifier ) : ExprTree = {
+      var pos:Positioned = currentToken;
       if(currentToken.kind == EQSIGN){
         eat(EQSIGN);
-        new Assign(id, parseExpression);
+        new Assign(id, parseExpression).setPos(pos);
       }
       else if(MaybeAccessFirstSet.contains(currentToken.kind)){
         parseMaybeAccess(id);
@@ -220,20 +227,21 @@ object Parser extends Phase[Iterator[Token], Program] {
 
 
     def parseThing: ExprTree = {
+      var pos:Positioned = currentToken;
       var thing: ExprTree = currentToken.kind match { 
-        case TRUE   =>  parseMaybeAccess ( { eat(TRUE); new True();})
-        case FALSE  => parseMaybeAccess (  {eat(FALSE); new False();})
+        case TRUE   =>  parseMaybeAccess ( { eat(TRUE); new True().setPos(pos);})
+        case FALSE  => parseMaybeAccess (  {eat(FALSE); new False().setPos(pos);})
         case IDKIND => IdentOrAssign( currentToken match{
-                          case idtoken:ID => {eat(IDKIND); new Identifier(idtoken.value);}
+                          case idtoken:ID => {eat(IDKIND); new Identifier(idtoken.value).setPos(pos);}
                           case idtoken    => fatal("somthing imposible happend, IDKIND but not ID", idtoken);
                         })
-        case THIS   =>  parseMaybeAccess ( {eat(THIS); new This();})
-        case NULL   =>  parseMaybeAccess ( {eat(NULL); new Null();})
+        case THIS   =>  parseMaybeAccess ( {eat(THIS); new This().setPos(pos);})
+        case NULL   =>  parseMaybeAccess ( {eat(NULL); new Null().setPos(pos);})
         case LBRACE =>  parseMaybeAccess ( {
                           eat(LBRACE); 
                           if(currentToken.kind == RBRACE){
                             eat(RBRACE);
-                            new Block(List());
+                            new Block(List()).setPos(pos);
                           }
                           else{
                             var exprs: List[ExprTree] = List(parseExpression);
@@ -242,7 +250,7 @@ object Parser extends Phase[Iterator[Token], Program] {
                               exprs :+= parseExpression;
                             }
                             eat(RBRACE);
-                            new Block(exprs);
+                            new Block(exprs).setPos(pos);
                           }
                         })
         case IF     =>  parseMaybeAccess ( {
@@ -252,10 +260,10 @@ object Parser extends Phase[Iterator[Token], Program] {
                           val thn = parseExpression;
                           if(currentToken.kind == ELSE){
                             eat(ELSE);
-                            new If(expr, thn, Some(parseExpression));
+                            new If(expr, thn, Some(parseExpression)).setPos(pos);
                           }
                           else{
-                            new If(expr, thn, None);
+                            new If(expr, thn, None).setPos(pos);
                           }
                         })
         case WHILE  =>  parseMaybeAccess ( {
@@ -263,31 +271,31 @@ object Parser extends Phase[Iterator[Token], Program] {
                           val cond = parseExpression;
                           eat(RPAREN);
                           val body = parseExpression;
-                          new While(cond, body);
+                          new While(cond, body).setPos(pos);
                         })
         case PRINTLN => parseMaybeAccess ( {
                           eat(PRINTLN);eat(LPAREN);
                           val expr=parseExpression;
                           eat(RPAREN);
-                          new Println(expr);
+                          new Println(expr).setPos(pos);
                         })
         case NEW    =>  parseMaybeAccess ( {
                           eat(NEW);
                           val tpe = parseIdentifier;
                           eat(LPAREN);eat(RPAREN);
-                          new New(tpe);
+                          new New(tpe).setPos(pos);
                         })
         case INTLITKIND =>  parseMaybeAccess ( currentToken match {
                               case intlit:INTLIT => {
                                   eat(INTLITKIND);
-                                  new IntLit(intlit.value);
+                                  new IntLit(intlit.value).setPos(pos);
                                 }
                               case intlit => fatal("somthing imposible happend, INTLITKIND but not INTLIT", intlit);
                             })
         case STRLITKIND =>  parseMaybeAccess ( currentToken match{
                               case strlit:STRLIT => {
                                   eat(STRLITKIND);
-                                  new StringLit(strlit.value);
+                                  new StringLit(strlit.value).setPos(pos);
                                 }
                               case strlit =>  fatal("somthing imposible happend, STRILITKIND but not STRLIT", strlit);
                             })
@@ -297,36 +305,73 @@ object Parser extends Phase[Iterator[Token], Program] {
                           eat(RPAREN);
                           expr;
                         })
-        case v      => expected(TRUE, FALSE, IDKIND, THIS, NULL, LBRACE, IF, WHILE, PRINTLN, NEW, INTLITKIND, STRLITKIND, LPAREN)
+        case v      => expected(TRUE,
+          FALSE,
+          IDKIND,
+          THIS,
+          NULL,
+          LBRACE,
+          IF,
+          WHILE,
+          PRINTLN,
+          NEW,
+          INTLITKIND,
+          STRLITKIND,
+          LPAREN)
       }
       thing;
     }
 
     def parseFactor: ExprTree = {
+      var pos:Positioned = currentToken;
       if(currentToken.kind==BANG){
         eat(BANG);
         val temp=parseThing;
-        new Not(temp);
+        new Not(temp).setPos(pos);
       }
-      else if(List(TRUE, FALSE, IDKIND, THIS, NULL, LBRACE, IF, WHILE, PRINTLN, NEW, INTLITKIND, STRLITKIND, LPAREN).contains(currentToken.kind)){
+      else if(List(TRUE, 
+                    FALSE, 
+                    IDKIND, 
+                    THIS, 
+                    NULL, 
+                    LBRACE, 
+                    IF, WHILE, 
+                    PRINTLN, NEW, 
+                    INTLITKIND, 
+                    STRLITKIND, 
+                    LPAREN).contains(currentToken.kind)){
         parseThing;
       }
       else{
-        expected(BANG, TRUE, FALSE, IDKIND, THIS, NULL, LBRACE, IF, WHILE, PRINTLN, NEW, INTLITKIND, STRLITKIND, LPAREN)
+        expected(BANG,
+          TRUE,
+          FALSE,
+          IDKIND,
+          THIS,
+          NULL, 
+          LBRACE,
+          IF,
+          WHILE,
+          PRINTLN,
+          NEW,
+          INTLITKIND,
+          STRLITKIND,
+          LPAREN)
       }
     }
 
     def parseFactorList(rhs: ExprTree): ExprTree = {
+      var pos:Positioned = currentToken;
       if( currentToken.kind == TIMES){
         readToken;
         val lhs = parseFactor;
-        parseFactorList(new Times(rhs, lhs));
+        parseFactorList(new Times(rhs, lhs).setPos(pos));
 
       }
       else if(currentToken.kind == DIV ){
         readToken;
         val lhs = parseFactor;
-        parseFactorList(new Div(rhs, lhs));
+        parseFactorList(new Div(rhs, lhs).setPos(pos));
       }
       else if (parseFactorListFollowSet.contains(currentToken.kind)){
         rhs;
@@ -342,16 +387,17 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
 
     def parseTermList(rhs: ExprTree): ExprTree = {
+      var pos:Positioned = currentToken;
        if( currentToken.kind == PLUS){
         readToken;
         val lhs = parseTerm;
-        parseTermList(new Plus(rhs, lhs));
+        parseTermList(new Plus(rhs, lhs).setPos(pos));
 
       }
       else if(currentToken.kind == MINUS ){
         readToken;
         val lhs = parseTerm;
-        parseTermList(new Minus(rhs, lhs));
+        parseTermList(new Minus(rhs, lhs).setPos(pos));
       }
       else if (parseTermListFollowSet.contains(currentToken.kind)){
         rhs;
@@ -367,16 +413,17 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
 
     def parseCompList(rhs: ExprTree): ExprTree = {
-       if( currentToken.kind == EQUALS){
+      var pos:Positioned = currentToken;
+      if( currentToken.kind == EQUALS){
         readToken;
         val lhs = parseCompTerm;
-        parseCompList(new Equals(rhs, lhs));
+        parseCompList(new Equals(rhs, lhs).setPos(pos));
 
       }
       else if(currentToken.kind == LESSTHAN ){
         readToken;
         val lhs = parseCompTerm;
-        parseCompList(new LessThan(rhs, lhs));
+        parseCompList(new LessThan(rhs, lhs).setPos(pos));
       }
       else if (parseCompListFollowSet.contains(currentToken.kind)){
         rhs;
@@ -392,10 +439,11 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
 
     def parseAndList(rhs: ExprTree): ExprTree = {
-       if( currentToken.kind == AND){
+      if( currentToken.kind == AND){
+        var pos:Positioned = currentToken;
         readToken;
         val lhs = parseAndTerm;
-        parseAndList(new And(rhs, lhs));
+        parseAndList(new And(rhs, lhs).setPos(pos));
 
       }
       else if (parseAndListFollowSet.contains(currentToken.kind)){
@@ -412,11 +460,11 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
 
     def parseOrList(rhs: ExprTree): ExprTree = {
-       if( currentToken.kind == OR){
+      if( currentToken.kind == OR){
+        var pos:Positioned = currentToken;
         readToken;
         val lhs = parseOrTerm;
-        parseOrList(new Or(rhs, lhs));
-
+        parseOrList(new Or(rhs, lhs).setPos(pos));
       }
       else if (parseOrListFollowSet.contains(currentToken.kind)){
         rhs;
@@ -433,9 +481,10 @@ object Parser extends Phase[Iterator[Token], Program] {
     }
 
     def parseGoal: Program = {
+      var pos:Positioned = currentToken;
       var classes:  List[ClassDecl] = List();
       while(currentToken.kind==CLASS) classes :+= parseClassDecl;
-      val res = new Program(parseMainDecl, classes);
+      val res = new Program(parseMainDecl, classes).setPos(pos);
       eat(EOF);
       return res;
     }
