@@ -4,7 +4,7 @@ import java.io.File
 
 import lexer._
 import ast._
-
+import analyzer._
 
 object Main {
 
@@ -14,17 +14,16 @@ object Main {
     var ctx = Context()
 
     def processOption(args: List[String]): Unit = args match {
+      
       case "--tokens" :: args =>
         ctx = ctx.copy(doTokens = true)
         processOption(args)
-       
+      case "--symid" :: args =>
+        ctx = ctx.copy(doSymbolIds = true)
+        processOption(args)
       case "--print" :: args =>
       	ctx = ctx.copy(doPrintMain = true)
-        if(args(0) == "--symid"){
-          ctx = ctx.copy(doSymbolIds = true)
-        }
       	processOption(args)
-      	
       case "--ast" :: args =>
       	ctx = ctx.copy(doAST = true)
       	processOption(args) 
@@ -83,21 +82,18 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args)
-   // println(ctx);
     
     //move later?
     if(ctx.file == None){
       println("no file");
       sys.exit(1);
     }
-    
-          // case class If(expr: ExprTree, thn: ExprTree, els: Option[ExprTree])
-    // val str = Printer.apply(new Trees.If(new Trees.Not(new Trees.IntLit(12)), new Trees.Assign(new Trees.Identifier("value"),new Trees.Plus(new Trees.IntLit(3), new Trees.IntLit(2))), null));
-    // println(str);
-    // val program = Parser.run(tokenIter)(ctx);
-    
-    
-    if(ctx.doTokens){
+    if(ctx.doSymbolIds){
+      val tree = Lexer.andThen(Parser).andThen(NameAnalysis).run(ctx.file.get)(ctx);
+      Printer.doIds=true;
+      println(Printer.apply(tree));
+    }
+    else if(ctx.doTokens){
       printTokens(ctx);
       return
     }else{

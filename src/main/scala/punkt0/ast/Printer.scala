@@ -4,17 +4,25 @@ package ast
 import Trees._
 
 object Printer {
+  var doIds=false;
   def endl(indent:Int ):String = "\n  "+"  "*indent
   def apply(t: Tree ):String = apply(t, 0)
   def apply(t: Tree, indent:Int ): String = {
     t match{
     	case v:Program => var str = v.classes.foldLeft("")((total, cur) => total + Printer(cur)) +  Printer(v.main); str;
     	case v:MainDecl =>	var firstExp:: exprs = v.exprs;
-    						var str = "object " + Printer(v.obj) + " extends " + Printer(v.parent) + " {"+ endl(indent) + 
-    						v.vars.foldLeft("")((total, cur) => total + Printer(cur)) + endl(indent)+ 
-    						exprs.foldLeft(Printer(firstExp, indent+1))((total, cur) => total + ";\n" + Printer(cur,indent+1)) + " \n}"; str;
+    						var str = "object " + Printer(v.obj) + 
+                          ( if(doIds) "#" + v.getSymbol.id
+                            else "" ) +
+                          " extends " + 
+                          Printer(v.parent) + 
+                          " {"+ endl(indent) + 
+    						          v.vars.foldLeft("")( (total, cur) => total + Printer(cur)) +
+                          endl(indent) + 
+    						          exprs.foldLeft( Printer(firstExp, indent+1)) ( (total, cur) => total + ";\n" + Printer(cur,indent+1)) + " \n}"; str;
     	case v:ClassDecl => {
-                var str = "class " + Printer(v.id);
+                var str = "class " + Printer(v.id) + (  if(doIds) "#" + v.getSymbol.id
+                                                        else "" );
     	          if(v.parent.isDefined){str += " extends " + Printer(v.parent.get)};
     						str += " {" +endl(indent);
     						for(va <- v.vars){str += Printer(va) + endl(indent)};
@@ -26,10 +34,20 @@ object Printer {
                 }
     						str += "\n"+("  "*indent)+"}\n";
     						str};
-    case v:VarDecl => var str = "var " + Printer(v.id) + " : " + Printer(v.tpe) + " = " + Printer(v.expr) + ";"; str;
+    case v:VarDecl => var str = "var " + 
+                                Printer(v.id) + 
+                                ( if(doIds) "#" + v.getSymbol.id
+                                  else "" ) +
+                                " : " + 
+                                Printer(v.tpe) + 
+                                " = " + 
+                                Printer(v.expr) + 
+                                ";"; str;
 		case v:MethodDecl =>{var str= "";
     						  if(v.overrides){str = "override "};
-    						  str += "def " + Printer(v.id) + "(";
+    						  str +=  "def " + Printer(v.id) +
+                          ( if(doIds) "#" + v.getSymbol.id
+                            else "" ) + "(";
     						  var temp = v.args.foldLeft("")((total, cur) =>total + Printer(cur) + ", "); 
     						  temp = temp.dropRight(2);
     						  str += temp;
@@ -37,8 +55,13 @@ object Printer {
     						  str += v.vars.foldLeft("")((total, cur) => total + Printer(cur, indent)+endl(indent));
     						  for(ex <- v.exprs){str += Printer(ex, indent+1) + ";" +endl(indent)};
     						  str += Printer(v.retExpr) + "\n" +("  "*indent) +"}"; str};
-    	case v:Formal => var str = Printer(v.id) + ": " + Printer(v.tpe); str;
-    	
+    	case v:Formal => var str =  Printer(v.id) +  
+                                  ( if(doIds) "#" + v.getSymbol.id
+                                    else "" ) +
+                                  ": " + 
+                                  Printer(v.tpe);
+                       str;
+  
     	case v:BooleanType => var str = "Boolean"; str;
     	case v:IntType => var str = "Int"; str;
     	case v:StringType => var str = "String"; str;
