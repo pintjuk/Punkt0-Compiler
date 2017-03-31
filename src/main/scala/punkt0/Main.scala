@@ -20,6 +20,9 @@ object Main {
        
       case "--print" :: args =>
       	ctx = ctx.copy(doPrintMain = true)
+        if(args(0) == "--symid"){
+          ctx = ctx.copy(doSymbolIds = true)
+        }
       	processOption(args)
       	
       case "--ast" :: args =>
@@ -58,6 +61,7 @@ object Main {
     println(" -d <outdir>   generates class files in the specified directory")
     println(" --tokens 		displays tokes")
     println(" --print		prints the parsed program")
+    println(" --symid   in combination with --print: prints all identifiers symbols")
     println(" --ast			prints out the AST")
   }
 
