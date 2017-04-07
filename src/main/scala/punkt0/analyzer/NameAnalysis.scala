@@ -15,7 +15,7 @@ object NameAnalysis extends Phase[Program, Program] {
 		  var classSym = new Symbols.ClassSymbol(cl.id.value).setPos(cl)
 		  cl.setSymbol(classSym)
       
-      globalScope.methods get cl.id.value match{
+      globalScope.classes get cl.id.value match{
         case None     =>  globalScope.classes += (cl.id.value -> classSym)
         case Some(x)  =>  error( " class " + cl.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",cl);
 
@@ -27,20 +27,19 @@ object NameAnalysis extends Phase[Program, Program] {
     def linkClassParrents(cl: ClassDecl){
       cl.parent match{
         case None     => {}
-        case Some(x)  => globalScope.lookupClass(x) match {
+        case Some(x)  => globalScope.lookupClass(x.value) match {
           case None               => error("class "+ x.value + "is undefiend", x);
-          case Some(parSymbol)  => cl.parent=parSymbol;
-      
+          case Some(parSymbol) => cl.getSymbol.parent= Some(parSymbol);
         }
       }
     }
 
     def doYouLoop(cl: ClassDecl){
-      var chain: List[ClassSymbol]
-      var curret_class=Some(cl.getSymbol)
-      while(current_class==Some(_)){
+      var chain: List[ClassSymbol] = Nil
+      var current_class:Option[ClassSymbol]=Some(cl.getSymbol)
+      while(current_class match { case Some(v : Symbol) => true ; case v => false}){
         if(chain.contains(current_class.get))
-          error("llegal cyclic reference involving class"+cl.id.name, cl)
+          error("llegal cyclic reference involving class"+cl.id.value, cl)
         else{
           chain :+= current_class.get;
           current_class=current_class.get.parent;
