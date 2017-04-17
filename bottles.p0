@@ -3,40 +3,17 @@
 // I guess everyone saw that one coming :)
 
 class DrunkPirate {
-    def sing(): Boolean = {
+def lel(): Boolean={
+  true
+}
+def sing(): Boolean = {
         this.verse(99);
         true
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def sing(): Boolean = {
-        this.verse(99);
-        true
-    }
-
+    
     def verse(number: Int) : Int  = {
         println(this.bottles(number) + " of beer on the wall, take one down, pass it around, " + this.bottles(number - 1) + " of beer on the wall.");
         if (1 < number) {
@@ -52,6 +29,18 @@ class DrunkPirate {
         }
     }
 }
+
+class Drunk extends DrunkPirate {
+
+    var aoeu:Drunk=10;
+  
+    override def bottles(number: Drunk) : Drunk = {
+        if (number == 0) { "no more bottles" } else {
+            if (number == 1) "1 bottle" else number + " bottles"
+        }
+    }
+}
+
 
 object Main extends App {
     if (new DrunkPirate().sing()) println("Done!")

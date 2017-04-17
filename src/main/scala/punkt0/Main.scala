@@ -90,6 +90,7 @@ object Main {
     }
     if(ctx.doSymbolIds){
       val tree = Lexer.andThen(Parser).andThen(NameAnalysis).run(ctx.file.get)(ctx);
+      Reporter.terminateIfErrors();
       Printer.doIds=true;
       println(Printer.apply(tree));
     }

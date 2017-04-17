@@ -12,18 +12,14 @@ object Printer {
     	case v:Program => var str = v.classes.foldLeft("")((total, cur) => total + Printer(cur)) +  Printer(v.main); str;
     	case v:MainDecl =>	var firstExp:: exprs = v.exprs;
     						var str = "object " + Printer(v.obj) + 
-                          ( if(doIds) "#" + v.getSymbol.id
-                            else "" ) +
                           " extends " + 
-                          Printer(v.parent) + 
-                          " {"+ endl(indent) + 
+                          Printer(v.parent) + " {"+ endl(indent) + 
     						          v.vars.foldLeft("")( (total, cur) => total + Printer(cur)) +
                           endl(indent) + 
     						          exprs.foldLeft( Printer(firstExp, indent+1)) ( (total, cur) => total + ";\n" + Printer(cur,indent+1)) + " \n}"; str;
     	case v:ClassDecl => {
-                var str = "class " + Printer(v.id) + (  if(doIds) "#" + v.getSymbol.id
-                                                        else "" );
-    	          if(v.parent.isDefined){str += " extends " + Printer(v.parent.get)};
+                var str = "class " + Printer(v.id);
+    	          if(v.parent.isDefined){str += " extends " + Printer(v.parent.get) };
     						str += " {" +endl(indent);
     						for(va <- v.vars){str += Printer(va) + endl(indent)};
     						var first=true;
@@ -35,9 +31,7 @@ object Printer {
     						str += "\n"+("  "*indent)+"}\n";
     						str};
     case v:VarDecl => var str = "var " + 
-                                Printer(v.id) + 
-                                ( if(doIds) "#" + v.getSymbol.id
-                                  else "" ) +
+                                Printer(v.id) +
                                 " : " + 
                                 Printer(v.tpe) + 
                                 " = " + 
@@ -45,9 +39,7 @@ object Printer {
                                 ";"; str;
 		case v:MethodDecl =>{var str= "";
     						  if(v.overrides){str = "override "};
-    						  str +=  "def " + Printer(v.id) +
-                          ( if(doIds) "#" + v.getSymbol.id
-                            else "" ) + "(";
+    						  str +=  "def " + Printer(v.id) + "(";
     						  var temp = v.args.foldLeft("")((total, cur) =>total + Printer(cur) + ", "); 
     						  temp = temp.dropRight(2);
     						  str += temp;
@@ -56,8 +48,6 @@ object Printer {
     						  for(ex <- v.exprs){str += Printer(ex, indent+1) + ";" +endl(indent)};
     						  str += Printer(v.retExpr) + "\n" +("  "*indent) +"}"; str};
     	case v:Formal => var str =  Printer(v.id) +  
-                                  ( if(doIds) "#" + v.getSymbol.id
-                                    else "" ) +
                                   ": " + 
                                   Printer(v.tpe);
                        str;
@@ -86,8 +76,10 @@ object Printer {
 
     	case v:True => var str = "true"; str;
     	case v:False => var str = "false"; str;
-    	case v:Identifier => var str = v.value; str;    	
-    	case v:This => var str = "this"; str;
+    	case v:Identifier => var str = v.value +  ( if(doIds) "#" + v.symString
+                                    else "" ); str;    	
+    	case v:This => var str = "this"+  ( if(doIds) "#" + v.symString
+                                    else "" ) ; str;
     	case v:Null => var str = "null"; str;
     	case v:New => var str = "new " + Printer(v.tpe) + "()"; str;
     	case v:Not => var str = "!" + "(" + Printer(v.expr) + ")"; str;
