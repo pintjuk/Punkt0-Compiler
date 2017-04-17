@@ -1,6 +1,7 @@
 package punkt0
 package analyzer
 
+import Types._
 
 object Symbols {
 
@@ -23,7 +24,7 @@ object Symbols {
     }
   }
 
-  sealed abstract class Symbol extends Positioned {
+  sealed abstract class Symbol extends Positioned with Typed {
     val id: Int = ID.next
     val name: String
   }
