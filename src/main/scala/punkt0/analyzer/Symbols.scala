@@ -39,7 +39,8 @@ object Symbols {
     }
   }
 
-  class GlobalScope {
+  class GlobalScope extends Symbol{
+    val name = "globalScope"
     var mainClass: ClassSymbol = _
     var classes = Map[String, ClassSymbol]()
 
@@ -76,6 +77,7 @@ object Symbols {
     var params = Map[String, VariableSymbol]()
     var members = Map[String, VariableSymbol]()
     var argList: List[VariableSymbol] = Nil
+    var retType: Type= null
     var overridden: Option[MethodSymbol] = None
 
     def lookupVar(n: String, err:Boolean=false, pos: Positioned = NoPosition): Option[VariableSymbol] = members get n match {

@@ -7,7 +7,7 @@ import analyzer.Types._
 object Trees {
   sealed trait Tree extends Positioned
 
-  case class Program(main: MainDecl, classes: List[ClassDecl]) extends Tree
+  case class Program(main: MainDecl, classes: List[ClassDecl]) extends Tree with Symbolic[GlobalScope] 
   case class MainDecl(obj: Identifier, parent: Identifier, vars: List[VarDecl], exprs: List[ExprTree]) extends Tree with Symbolic[ClassSymbol]
   case class ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree with Symbolic[ClassSymbol]
   case class VarDecl(tpe: TypeTree, id: Identifier, expr: ExprTree) extends Tree with Symbolic[VariableSymbol]
@@ -47,6 +47,8 @@ object Trees {
 
       case vs: VariableSymbol =>
         vs.getType
+      case gs: GlobalScope =>
+        sys.error("Global scope should not be attached to identefier")
     }
     override def setType(tpe: Type) = this
   }

@@ -260,6 +260,7 @@ object NameAnalysis extends Phase[Program, Program] {
       }
     });
     prog.main.exprs.map(attachSymInExpr(_, Left(prog.main.getSymbol)))
+    prog.setSymbol(globalScope)
     prog
   }
 

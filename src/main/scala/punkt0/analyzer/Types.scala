@@ -34,10 +34,70 @@ object Types {
     override def toString = "Int"
   }
 
-  // TODO: Complete by creating necessary types
+  case object TBoolean extends Type {
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TBoolean => true
+      case _ => false
+    }
+    override def toString = "Boolean"
+
+  }
+
+  case object TString extends Type{
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TString => true
+      case _ => false
+    }
+    override def toString = "String"
+
+  }
+
+  case object TUnit extends Type{
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TUnit => true
+      case _ => false
+    }
+    override def toString = "Unit"
+
+  }
+
+  case class TClass (classSymbol: ClassSymbol) extends Type{
+    def name = classSymbol.name
+    def ==(that:Type): Boolean = {
+      that match {
+        case v:TClass => v.classSymbol.name == name
+        case v        => false
+      }
+    }
+
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case Types.anyRef => true
+      case otherClass : TClass => if (otherClass.classSymbol.name==classSymbol.name){
+                                    true
+                                  }
+                                  else classSymbol.parent match {
+                                    case None    => false
+                                    case Some(v) => v.getType.isSubTypeOf(otherClass)
+                                  }
+      case _ => false
+    }
+    override def toString = "String"
+
+  }
 
   case class TAnyRef(classSymbol: ClassSymbol) extends Type {
-    override def isSubTypeOf(tpe: Type): Boolean = ???
+    def ==(that:Type): Boolean = {
+      that match {
+        case v:TAnyRef  => true
+        case v          => false
+      }
+    }
+
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case Types.anyRef => true
+      case _ => false
+    }
+
     override def toString = classSymbol.name
   }
 
