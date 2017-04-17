@@ -2,6 +2,7 @@ package punkt0
 package ast
 
 import analyzer.Symbols._
+import analyzer.Types._
 
 object Trees {
   sealed trait Tree extends Positioned
@@ -14,13 +15,13 @@ object Trees {
   }
   sealed case class Formal(tpe: TypeTree, id: Identifier) extends Tree with Symbolic[VariableSymbol]
 
-  sealed trait TypeTree extends Tree
+  sealed trait TypeTree extends Tree with Typed
   case class BooleanType() extends TypeTree
   case class IntType() extends TypeTree
   case class StringType() extends TypeTree
   case class UnitType() extends TypeTree
 
-  sealed trait ExprTree extends Tree
+  sealed trait ExprTree extends Tree with Typed
   case class And(lhs: ExprTree, rhs: ExprTree) extends ExprTree
   case class Or(lhs: ExprTree, rhs: ExprTree) extends ExprTree
   case class Plus(lhs: ExprTree, rhs: ExprTree) extends ExprTree
@@ -35,7 +36,20 @@ object Trees {
 
   case class True() extends ExprTree
   case class False() extends ExprTree
-  case class Identifier(value: String) extends TypeTree with ExprTree with Symbolic[Symbol]
+  case class Identifier(value: String) extends TypeTree with ExprTree with Symbolic[Symbol] {
+    // The type of the identifier depends on the type of the symbol
+    override def getType: Type = getSymbol match {
+      case cs: ClassSymbol =>
+        TAnyRef(cs)
+
+      case ms: MethodSymbol =>
+        sys.error("Requesting type of a method identifier.")
+
+      case vs: VariableSymbol =>
+        vs.getType
+    }
+    override def setType(tpe: Type) = this
+  }
   case class This() extends ExprTree with Symbolic[ClassSymbol]
   case class Null() extends ExprTree
   case class New(tpe: Identifier) extends ExprTree
