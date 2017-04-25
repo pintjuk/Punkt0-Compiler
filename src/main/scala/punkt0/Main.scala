@@ -5,6 +5,7 @@ import java.io.File
 import lexer._
 import ast._
 import analyzer._
+import code._
 
 object Main {
 
@@ -104,6 +105,8 @@ object Main {
       }
       if(ctx.doPrintMain){
         println(Printer.apply(tree));
+      }else{
+        CodeGeneration.run(tree)(ctx);
       }
     }
   }
