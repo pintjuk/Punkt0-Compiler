@@ -1,0 +1,6 @@
+class C {}
+
+object Main extends App {
+  // Error: Type error: Expected: Int, String, found: C
+  println(new C())
+}

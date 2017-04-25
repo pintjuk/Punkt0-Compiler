@@ -1,0 +1,7 @@
+class C {
+}
+
+object Main extends App {
+  // Error: Incompatible types in equality: C, Int
+  println(new C() == 20)
+}

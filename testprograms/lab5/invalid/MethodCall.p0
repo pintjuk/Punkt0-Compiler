@@ -1,0 +1,26 @@
+class D {
+  var data: String = "";
+  def getData(): String = {
+    data
+  }
+}
+
+class C {
+  var f: Int = 0;
+  def m(x: Int, d: D): String = {
+    f = x;
+    d.getData()
+  }
+  def getF(): Int = {
+    f
+  }
+}
+
+object Main extends App {
+  var c: C = null;
+  var d: D = null;
+  d = new D();
+  c = new C();
+  // Error: Type error: Expected: D, found: C
+  println(c.m(5, new C()))
+}

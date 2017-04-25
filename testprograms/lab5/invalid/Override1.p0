@@ -1,0 +1,7 @@
+class C {
+  override def foo(): Int = {3}
+}
+
+object Main extends App {
+  println(new C().foo())
+}

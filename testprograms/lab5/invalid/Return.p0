@@ -1,0 +1,18 @@
+class C {
+  var f: Int = 0;
+  def m(x: Int): Unit = {
+    f = x;
+    // Error: Type error: Expected: Unit, found: Int
+    f
+  }
+  def getF(): Int = {
+    f
+  }
+}
+
+object Main extends App {
+  var c: C = null;
+  c = new C();
+  c.m(5);
+  println(c.getF())
+}
