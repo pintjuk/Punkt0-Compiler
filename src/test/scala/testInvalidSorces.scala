@@ -4,6 +4,7 @@ import java.io.File
 import java.io._
 import punkt0._
 import ast._
+import analyzer._
 import lexer._
 
 
@@ -56,8 +57,8 @@ class rutTestPrograms extends FlatSpec {
       val tokens = Main.mkTokens(ctx);
       Reporter.terminateIfErrors
       val tokensCheck = scala.io.Source.fromFile(new File(filename.dropRight(2)+"check")).mkString;
-      println(tokens);
-      println(tokensCheck);
+      //println(tokens);
+      //println(tokensCheck);
       assert(tokens.stripLineEnd === tokensCheck.stripLineEnd);
     }
 
@@ -94,8 +95,8 @@ class rutTestPrograms extends FlatSpec {
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
       val correctAst = scala.io.Source.fromFile(new File(filename+".ast")).mkString;
       val ourAst = tree.toString;
-      println(ourAst);
-      println(correctAst);
+      //println(ourAst);
+      //println(correctAst);
       assert(ourAst.replaceAll("\\s+","") === correctAst.replaceAll("\\s+",""));
     }
 
@@ -143,4 +144,33 @@ class rutTestPrograms extends FlatSpec {
        assert(Printer.apply(newtree) === Printer.apply(tree) );
     }*/
   }
+  Reporter.reset;
+ for(filename <- getListOfFiles("testprograms/lab5/invalid")){
+    filename.toString should "throw  RuntimeException when typechecking " in{
+      var ctx = Context()
+      ctx = ctx.copy( doSymbolIds = true)
+      ctx = ctx.copy(file = Some( filename))
+      assertThrows[RuntimeException] {
+        Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
+        Reporter.terminateIfErrors;
+      }
+      Reporter.reset;
+    }
+ } 
+ 
+ for(filename <- getListOfFiles("testprograms/lab5/valid")){
+    Reporter.reset;
+    filename.toString should "typecheck" in{
+      var ctx = Context()
+      ctx = ctx.copy(file = Some( filename))
+      Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
+      Reporter.terminateIfErrors;
+      Reporter.reset;
+
+    }
+
+  }
+
+
+
 }

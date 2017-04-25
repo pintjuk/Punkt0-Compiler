@@ -59,19 +59,33 @@ object TypeChecking extends Phase[Program, Program] {
                               else Reporter.error("Type error: this cant be Null", v); TError;
         case v:New        =>  v.tpe.getSymbol.getType
         case v:Not        =>  tcExpr(v.expr,scope, TBoolean)
-        case v:Block      =>  v.exprs.slice(0, v.exprs.length-2).map(tcExpr(_,scope)); val res:Type= tcExpr(v.exprs.last,scope, expected:_*);res;
+        case v:Block      =>  v.exprs.slice(0, v.exprs.length-2).map(tcExpr(_,scope));
+                              val res:Type =  if(v.exprs.length==0) TUnit 
+                                              else tcExpr(v.exprs.last,scope, expected:_*);
+                              res;
         case v:If         =>  tcExpr(v.expr,scope, TBoolean);
                               val thnT = tcExpr(v.thn,scope, expected:_*);
                               v.els match{
                                 case None       => thnT;
-                                case Some(els)  => val elsT = tcExpr(els,scope, expected:_*); thnT match{ 
-                                  case thnClass:TClass   => elsT match{
-                                    case elsClass:TClass    => elsClass.lub(thnClass)
-                                    case x                  => Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
+                                case Some(els)  => {
+                                  val elsT = tcExpr(els, scope, expected:_*); 
+                                  thnT match{ 
+                                    case thnClass:TClass   =>{
+                                      elsT match{
+                                        case elsClass:TClass    => elsClass.lub(thnClass)
+                                        case x                  => Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
                                                                 x + " class "+thnClass + " have no bound", v.thn, "and", els);TError
+                                      }
+                                    }
+                                    case x => { 
+                                      if(thnT==elsT){
+                                        thnT
+                                      }else{
+                                        Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
+                                          thnT + " class "+els.getType + " have no bound", v.thn, "and", els);TError
+                                      }
+                                    }
                                   }
-                                  case x        => if(!(thnT==elsT)) Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
-                                                                        thnT + " class "+els.getType + " have no bound", v.thn, "and", els);TError
                                 }
                               }
         case v:While      =>  tcExpr(v.cond,scope, TBoolean); tcExpr(v.body,scope, TUnit);TUnit
