@@ -73,7 +73,7 @@ object NameAnalysis extends Phase[Program, Program] {
               (classScope.methods get meth.id.value match { case None => true; case Some(v) => false;}) && // and undefinid in this class
               (x.argList.length == meth.args.length)) { // and the same number of arguments 
                   val methSym=constructSymbol;
-                  x.overridden=Some(methSym);
+                  methSym.overridden=Some(x);
                 }
               else error( " method " + meth.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",meth)
             }

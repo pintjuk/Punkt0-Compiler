@@ -14,8 +14,13 @@ object Types {
 
   sealed abstract class Type {
     def isSubTypeOf(tpe: Type): Boolean
-  }
+    def superType():Type = this;
+    def lub(other: Type):Type = TUntyped;
 
+  }
+ 
+  trait lubed {
+      }
   case object TError extends Type {
     override def isSubTypeOf(tpe: Type): Boolean = true
     override def toString = "[error]"
@@ -70,6 +75,27 @@ object Types {
       }
     }
 
+    override def superType():Type = {
+      classSymbol.parent match{
+        case None =>  anyRef
+        case Some(sym) => sym.getType match {
+          case t:TClass => t
+          case t        => throw new IllegalStateException("WTF! type of class symbol must be a class, how is this even possible?");
+        }
+      }
+    }
+
+    override def lub(other: Type):Type = {
+      if(other==this)
+        this
+      else if(other == superType)
+        other
+      else if(other.superType == this)
+        this
+      else 
+        other.superType.lub(this.superType)
+    }
+
     override def isSubTypeOf(tpe: Type): Boolean = tpe match {
       case Types.anyRef => true
       case otherClass : TClass => if (otherClass.classSymbol.name==classSymbol.name){
@@ -98,9 +124,17 @@ object Types {
       case _ => false
     }
 
+    override def lub(other: Type):Type={
+      other match {
+        case oth:TAnyRef => anyRef;
+        case oth:TClass  => anyRef;
+        case oth         => TUntyped;
+      }
+    }
+
     override def toString = classSymbol.name
   }
 
   // special object to implement the fact that all objects are its subclasses
-  val anyRef = TAnyRef(new ClassSymbol("AnyRef"))
+  val anyRef = TClass(new ClassSymbol("AnyRef"))
 }

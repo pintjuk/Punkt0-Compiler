@@ -14,26 +14,39 @@ object TypeChecking extends Phase[Program, Program] {
 
     val globalScope = prog.getSymbol;
 
-    def tcExpr(expr: ExprTree, expected: Type*): Type = {
+    def tcExpr(expr: ExprTree,scope:Scope, expected: Type*): Type = {
       val tpe: Type = expr match{
-        case v:And        =>  tcExpr(v.lhs, TBoolean); tcExpr(v.rhs, TBoolean);
-        case v:Or         =>  tcExpr(v.lhs, TBoolean); tcExpr(v.rhs, TBoolean);
-        case v:Plus       =>  val lt = tcExpr(v.lhs, TInt, TString); 
-                              val rt = tcExpr(rhs, TInt, TString); 
-                              if(rt==Tint && lt==TInt)  TInt 
+        case v:And        =>  tcExpr(v.lhs,scope, TBoolean); tcExpr(v.rhs,scope, TBoolean);
+        case v:Or         =>  tcExpr(v.lhs,scope, TBoolean); tcExpr(v.rhs,scope, TBoolean);
+        case v:Plus       =>  val lt = tcExpr(v.lhs,scope, TInt, TString); 
+                              val rt = tcExpr(v.rhs,scope, TInt, TString); 
+                              if(rt==TInt && lt==TInt)  TInt 
                               else                      TString;
-        case v:Minus      =>  tcExpr(v.lhs, TInt); tcExpr(v.rhs, TInt);
-        case v:Times      =>  tcExpr(v.lhs, TInt); tcExpr(v.rhs, TInt);
-        case v:Div        =>  tcExpr(v.lhs, TInt); tcExpr(v.rhs, TInt);
-        case v:LessThan   =>  tcExpr(v.lhs, TInt); tcExpr(v.rhs, TInt); TBoolean;
-        case v:Equals     =>  val lt = tcExpr(v.lhs);
-                              val rt = tcExpr(v.rhs);
+        case v:Minus      =>  tcExpr(v.lhs,scope, TInt); tcExpr(v.rhs,scope, TInt);
+        case v:Times      =>  tcExpr(v.lhs,scope, TInt); tcExpr(v.rhs,scope, TInt);
+        case v:Div        =>  tcExpr(v.lhs,scope, TInt); tcExpr(v.rhs,scope, TInt);
+        case v:LessThan   =>  tcExpr(v.lhs,scope, TInt); tcExpr(v.rhs,scope, TInt); TBoolean
+        case v:Equals     =>  val lt = tcExpr(v.lhs,scope);
+                              val rt = tcExpr(v.rhs,scope);
                               if(lt==rt) TBoolean
-                              else if(!(lt==rt) && lt.isInstanceOf[TClass]&& rt.isInstanceOf[TClass])
-                              else error("Type error: type missmatch, cant compare primatives and classes", expr); TError;
-        case v:MethodCall =>  tcExpr(v.obj, Types.anyRef).classSymbol.lookupMethod(v.meth) match {
-                                case None => error("Type error: object does not contain reference" + v.meth, v.obj); TError;
-                                case Some(methSymbol) v.args zip methSymbol.argList map {case (arg, param) => tcExpr(arg, param)}; methSymbol.retType;
+                              else if(!(lt==rt) && (!lt.isInstanceOf[TClass] || !rt.isInstanceOf[TClass]) ) { 
+                                Reporter.error("Type error: type missmatch, not type correct to compare " + rt+" and "+ lt, expr); 
+                                TError;
+                              }
+                              else 
+                                TBoolean
+        case v:MethodCall =>  tcExpr(v.obj,scope, Types.anyRef) match{
+                                case derefed:TClass => derefed.classSymbol.lookupMethod(v.meth.value) match {
+                                  case None => {Reporter.error("Type error: object does not contain reference" + v.meth, v.obj); TError;}
+                                  case Some(methSymbol) => {
+                                    v.args zip methSymbol.argList map {
+                                      case (arg, param) => tcExpr(arg,scope, param.getType)
+                                    }; 
+                                    v.meth.setSymbol(methSymbol);
+                                    methSymbol.retType;
+                                  }
+                                }
+                                case tp => Reporter.error("Type error: cant dereference "+tp, v.obj);TError 
                               }
         case v:IntLit     =>  TInt
         case v:StringLit  =>  TString
@@ -42,16 +55,30 @@ object TypeChecking extends Phase[Program, Program] {
         case v:Identifier =>  v.getSymbol.getType
         case v:This       =>  v.getSymbol.getType
         case v:Null       =>  if(expected.isEmpty) Types.anyRef
-                              else if(expected.exists(e => e.isInstanceOf[TClass])) expected.filter(e => e.isInstanceOf[TClass]).first   
-                              else Report.error("Type error: this cant be Null", v); TError;
+                              else if(expected.exists(e => e.isInstanceOf[TClass])) expected.filter(e => e.isInstanceOf[TClass]).head
+                              else Reporter.error("Type error: this cant be Null", v); TError;
         case v:New        =>  v.tpe.getSymbol.getType
-        case v:Not        =>  tcExpr(v.expr, TBoolean)
-        case v:Block      =>  v.exprs.slice(0, v.exprs.length-2).map(tcExpr(_)); tcExpr(v.exprs.last, expected);
-        case v:If         =>  tcExpr(v.expr, IBoolean);
-                              val thnT = tcExpr(v.thn, expected);
+        case v:Not        =>  tcExpr(v.expr,scope, TBoolean)
+        case v:Block      =>  v.exprs.slice(0, v.exprs.length-2).map(tcExpr(_,scope)); val res:Type= tcExpr(v.exprs.last,scope, expected:_*);res;
+        case v:If         =>  tcExpr(v.expr,scope, TBoolean);
+                              val thnT = tcExpr(v.thn,scope, expected:_*);
                               v.els match{
                                 case None       => thnT;
-                                case Some(els)  => val elsT = tcExpr(els, expected);
+                                case Some(els)  => val elsT = tcExpr(els,scope, expected:_*); thnT match{ 
+                                  case thnClass:TClass   => elsT match{
+                                    case elsClass:TClass    => elsClass.lub(thnClass)
+                                    case x                  => Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
+                                                                x + " class "+thnClass + " have no bound", v.thn, "and", els);TError
+                                  }
+                                  case x        => if(!(thnT==elsT)) Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
+                                                                        thnT + " class "+els.getType + " have no bound", v.thn, "and", els);TError
+                                }
+                              }
+        case v:While      =>  tcExpr(v.cond,scope, TBoolean); tcExpr(v.body,scope, TUnit);TUnit
+        case v:Println    =>  tcExpr(v.expr,scope, TBoolean, TString, TInt); TUnit
+        case v:Assign     =>  tcExpr(v.id, scope); scope.lookupVarNotArg(v.id.value) match{
+                                case Some(varsymbol)  =>  tcExpr(v.expr,scope, v.id.getType);  TUnit
+                                case None             =>  Reporter.error("Type error: Cannot assign to argument "+v.id.value, v);TError
                               }
       }
 
@@ -70,9 +97,9 @@ object TypeChecking extends Phase[Program, Program] {
     }
     
     def tcMeth(mth: MethodDecl, expected: Type*): Type = {
-      mth.vars.map(vr => vr.setType = tcExpr(vr.expr, vr.getSymbol.getType))
-      mth.exprs.map(tcExpr);
-      tcExpr(mth.retExpr, expected);
+      mth.vars.map(vr => tcExpr(vr.expr, mth.getSymbol, vr.getSymbol.getType))
+      mth.exprs.map(tcExpr(_,mth.getSymbol));
+      tcExpr(mth.retExpr, mth.getSymbol, expected:_*);
     }
 
     
@@ -118,24 +145,34 @@ object TypeChecking extends Phase[Program, Program] {
     
     prog.classes.map(cl => {
       cl.methods.map(mth => {
-        if(mth.overrides)
-          if(mth.getSymbol.argList.length == mth.getSymbol.overridden.get.argList.length){
-            if(!(mth.getSymbol.argList zip mth.getSymbol.overridden.get.argList map {case (left, right) => left.getType == right.getType} forall Predef.identity))
-              Reporter.error("Type error: argumets have to match when overriding", mth)
-            if(mth.getSymbol.retType != mth.getSymbol.overridden.get.retType)
-              Reporter.error("Type error: return types must match when overriding", mth.retType)
+        if(mth.overrides){
+          mth.getSymbol.overridden match {
+            case Some(overriddenMethod)  => {
+                if(mth.getSymbol.argList.length == overriddenMethod.argList.length){
+                  if(!(mth.getSymbol.argList zip overriddenMethod.argList map {case (left, right) => left.getType == right.getType} forall Predef.identity))
+                    Reporter.error("Type error: argumets have to match when overriding", mth)
+                  if(mth.getSymbol.retType != mth.getSymbol.overridden.get.retType)
+                    Reporter.error("Type error: return types must match when overriding", mth.retType)
+                }
+                else{
+                  Reporter.error("Type error: arguments have to match when overriding", mth)
+                }
+            }
+            case None => throw new IllegalStateException("WTF! MethdDecl says method overriddes but there is no overridden method in the symbol of " + mth.id.value);
           }
-          else{
-            Reporter.error("Type error: arguments have to match when overriding", mth)
-          }
+        }
       })
     })
 
     /* typecheck expressions add such */
-   prog.classes.map(cl => {
-     cl.vars.map(vr=> vr.setType(tcExpr(vr.expr, vr.getSymbol.getType)))
-     cl.methods.map(mth=> tcMeth(mth,mth.getSymbol.retType))
-   })
+    prog.classes.map(cl => {
+      cl.vars.map(vr=> tcExpr(vr.expr,cl.getSymbol, vr.getSymbol.getType))
+      cl.methods.map(mth=> tcMeth(mth, mth.getSymbol.retType))
+    })
+
+    prog.main.vars.map{ va=> tcExpr(va.expr, prog.main.getSymbol, va.getSymbol.getType)}
+    prog.main.exprs.map(tcExpr(_,prog.main.getSymbol));
     prog
+
   }
 }

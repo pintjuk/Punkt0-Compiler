@@ -5,6 +5,11 @@ import Types._
 
 object Symbols {
 
+  trait Scope {
+     def lookupVarNotArg(n: String): Option[VariableSymbol]
+     def lookupVar(n: String, err:Boolean=false, pos: Positioned = NoPosition): Option[VariableSymbol] 
+  }
+
   trait Symbolic[S <: Symbol] {
     private var _sym: Option[S] = None
 
@@ -39,10 +44,15 @@ object Symbols {
     }
   }
 
-  class GlobalScope extends Symbol{
+  class GlobalScope extends Symbol with Scope{
     val name = "globalScope"
     var mainClass: ClassSymbol = _
     var classes = Map[String, ClassSymbol]()
+    
+    def lookupVarNotArg(n:String): Option[VariableSymbol] = None
+    def lookupVar(n: String, err:Boolean=false, pos: Positioned = NoPosition): Option[VariableSymbol] = None 
+
+
 
     def lookupClass(n: String, err:Boolean = false, pos: Positioned = NoPosition): Option[ClassSymbol] =  classes get n match{
       case None =>  if(err) Reporter.error(" class " + n + " is undefined", pos); 
@@ -51,10 +61,13 @@ object Symbols {
     }
   }
 
-  class ClassSymbol(val name: String) extends Symbol {
+  class ClassSymbol(val name: String) extends Symbol with Scope{
     var parent: Option[ClassSymbol] = None
     var methods = Map[String, MethodSymbol]()
     var members = Map[String, VariableSymbol]()
+    
+
+    def lookupVarNotArg(n: String): Option[VariableSymbol] = lookupVar(n)
 
     def lookupMethod(n: String, err:Boolean=false, pos: Positioned = NoPosition): Option[MethodSymbol] = methods get n match {
       case None => parent match { 
@@ -73,12 +86,18 @@ object Symbols {
       case x    => x
     }
   }
-  class MethodSymbol(val name: String, val classSymbol: ClassSymbol) extends Symbol {
+  class MethodSymbol(val name: String, val classSymbol: ClassSymbol) extends Symbol with Scope{
     var params = Map[String, VariableSymbol]()
     var members = Map[String, VariableSymbol]()
     var argList: List[VariableSymbol] = Nil
     var retType: Type= null
     var overridden: Option[MethodSymbol] = None
+
+    def lookupVarNotArg(n: String): Option[VariableSymbol] = members get n match{
+      case None => classSymbol.lookupVarNotArg(n)
+      case v    => v
+    }
+
 
     def lookupVar(n: String, err:Boolean=false, pos: Positioned = NoPosition): Option[VariableSymbol] = members get n match {
       case None => params get n match {

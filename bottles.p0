@@ -24,24 +24,25 @@ def sing(): Boolean = {
     }
 
     def bottles(number: Int) : String = {
-        if (number == 0) { "no more bottles" } else {
-            if (number == 1) "1 bottle" else number + " bottles"
-        }
+        if (number == 0) { "no more bottles" } else { this.bottles(number)} 
     }
 }
 
 class Drunk extends DrunkPirate {
 
-    var aoeu:Drunk=10;
+    var aoeu:Boolean=true;
   
-    override def bottles(number: Drunk) : Drunk = {
+    override def bottles(number: Int) : String = {
+
         if (number == 0) { "no more bottles" } else {
-            if (number == 1) "1 bottle" else number + " bottles"
+            this.bottles(number)
         }
     }
 }
 
 
 object Main extends App {
+  var lel: String= "";
+  lel="";
     if (new DrunkPirate().sing()) println("Done!")
 }
