@@ -32,7 +32,7 @@ object CodeGeneration extends Phase[Program, Unit] {
             classFile.addMethod(
               makeType(mth.retType), 
               mth.id.value, 
-              (mth.args map (makeType(_.tpe))):_* 
+              (mth.args map (arg => makeType(arg.tpe))):_* 
             ).codeHandler, 
             mth 
           ) 
@@ -44,9 +44,9 @@ object CodeGeneration extends Phase[Program, Unit] {
     // a mapping from variable symbols to positions in the local variables
     // of the stack frame
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
-      val methSym = mt.getSymbol
+      val methSym = mt.getSymbol;
       var slots = Map[String, Int]();
-      var slotFor = name => {
+      def slotFor(name: String): Int = {
         slots get name match{
           case None => {
             val r = ch.getFreshVar;
@@ -56,7 +56,7 @@ object CodeGeneration extends Phase[Program, Unit] {
           case Some(s) => s
         }
       }
-      mt.exprs:::mt.retExpr map (generateExpr(ch, _, slotFor))
+      mt.exprs:::List(mt.retExpr) map (generateExpr(ch, _, slotFor))
       
       mt.retType match {
         case t:BooleanType  => ch << IRETURN
@@ -70,59 +70,66 @@ object CodeGeneration extends Phase[Program, Unit] {
       ch.freeze
     }
 
-    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String -> Int)){
+    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int)){
       expr match{
         case v:And        => 
         case v:Or         =>
         case v:Plus       =>
-        case v:Minus      =>  generateExpr(ch, v.lhs, slotFor):::generateExpr(ch, v.rhs, slotFor):::List(ISUB)  
-        case v:Times      =>  generateExpr(ch, v.lhs, slotFor):::generateExpr(ch, v.rhs, slotFor):::List(IMUL)  
-        case v:Div        =>  generateExpr(ch, v.lhs, slotFor):::generateExpr(ch, v.rhs, slotFor):::List(IDIV)  
+        case v:Minus      =>  generateExpr(ch, v.lhs, slotFor); 
+                              generateExpr(ch, v.rhs, slotFor); 
+                              ch << ISUB;  
+        case v:Times      =>  generateExpr(ch, v.lhs, slotFor);
+                              generateExpr(ch, v.rhs, slotFor);
+                              ch << IMUL;  
+        case v:Div        =>  generateExpr(ch, v.lhs, slotFor);
+                              generateExpr(ch, v.rhs, slotFor);
+                              ch << IDIV;  
         case v:LessThan   =>{
-                              val lTrue = ch.getFreshLabel()
-                              val lEnd = ch.getFreshLabel();
-                              generateExpr(ch, v.lhs, slotFor):::
-                              generateExpr(ch, v.rhs, slotFor):::
-                              If_ICmpLt(lTrue):::
-                                ICONST_0:::
-                                Goto(lEnd):::
-                              Lable(lTrue):::
-                                ICONST_1:::
-                              Lable(lEnd);
+                              val lTrue = ch.getFreshLabel("truelabel");
+                              val lEnd = ch.getFreshLabel("endlabel");
+                              generateExpr(ch, v.lhs, slotFor);
+                              generateExpr(ch, v.rhs, slotFor);
+                              ch << If_ICmpLt(lTrue);
+                                ch << ICONST_0;
+                                ch << Goto(lEnd);
+                              ch << Label(lTrue);
+                                ch << ICONST_1;
+                              ch << Label(lEnd);
                             }
         case v:Equals     => if(v.lhs.getType==TInt && v.rhs.getType==TInt)  
                             {
                              
-                              val lTrue = ch.getFreshLabel()
-                              val lEnd = ch.getFreshLabel();
-                              generateExpr(ch, v.lhs, slotFor):::
-                              generateExpr(ch, v.rhs, slotFor):::
-                              List(ISUB):::
-                              IfEq(lTrue):::
-                                ICONST_0:::
-                                Goto(lEnd):::
-                              Lable(lTrue):::
-                                ICONST_1:::
-                              Lable(lEnd);
+                              val lTrue = ch.getFreshLabel("truelabel");
+                              val lEnd = ch.getFreshLabel("endlabel");
+                              generateExpr(ch, v.lhs, slotFor);
+                              generateExpr(ch, v.rhs, slotFor);
+                              ch << ISUB;
+                              ch << IfEq(lTrue);
+                                ch << ICONST_0;
+                                ch << Goto(lEnd);
+                              ch << Label(lTrue);
+                                ch << ICONST_1;
+                              ch << Label(lEnd);
                             }else if (v.lhs.getType==TBoolean && v.rhs.getType==TBoolean) {
                               //TODO boolean lazy compare 
                             }else if ((v.lhs.getType==TString && v.rhs.getType==TString) || 
-                                      (v.lhs.getType.isInstanceOf (TClass) && v.rhs.getType.isInstanceOf(TClass))) {
+                                      (v.lhs.getType.isInstanceOf[TClass] && v.rhs.getType.isInstanceOf[TClass])) {
                                         //TODO: compare by reference
                             }else{
                               throw new RuntimeException("WTF? this sholud not happen, types are mismatched,\n the type checker should have caught this")
                             }
         case v:MethodCall =>  
-        case v:IntLit     => Ldc(v.value)
-        case v:StringLit  => Ldc(v.vlaue)
-        case v:True       => ICONST_1
-        case v:False      => ICONST_0
+        case v:IntLit     => ch << Ldc(v.value);
+        case v:StringLit  => ch << Ldc(v.value);
+        case v:True       => ch << ICONST_1;
+        case v:False      => ch << ICONST_0;
         case v:Identifier => 
         case v:This       => 
-        case v:Null       => ACONST_NULL
-        case v:New        => DefaultNew("L"+v.tpe.value+";")
-        case v:Not        => generateExpr(ch,v.expr,slotFor):::List(INEG)
-        case v:Block      => (v.exprs map  generateExpr(ch, _, slotFor)) foldLeft (Nil) (_:::_)
+        case v:Null       => ch << ACONST_NULL;
+        case v:New        => ch << DefaultNew("L"+v.tpe.value+";");
+        case v:Not        => generateExpr(ch,v.expr,slotFor);
+                             ch << INEG;
+        case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor));
         case v:If         => 
         case v:While      =>  
         case v:Println    => 
