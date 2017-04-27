@@ -93,6 +93,25 @@ object Symbols {
     var retType: Type= null
     var overridden: Option[MethodSymbol] = None
 
+    def isLocalVar(n: String): Boolean = {
+      members get n match {
+        case None    => false;
+        case Some(x) => true;
+      }
+    }
+    def isArg(n: String): Boolean = {
+      params get n match {
+        case None    => false;
+        case Some(x) => true;
+      }
+    }
+    def isField(n: String): Boolean = {
+      classSymbol.lookupVar(n) match {
+        case None    => false;
+        case Some(x) => true;
+      }
+    }
+
     def lookupVarNotArg(n: String): Option[VariableSymbol] = members get n match{
       case None => classSymbol.lookupVarNotArg(n)
       case v    => v

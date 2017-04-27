@@ -12,8 +12,9 @@ object CodeGeneration extends Phase[Program, Unit] {
 
   def run(prog: Program)(ctx: Context): Unit = {
 
+
     def makeType(tp:TypeTree):String={
-      tp match{
+      tp match {
         case t:BooleanType  => "B"
         case t:IntType      => "I"
         case t:StringType   => "Ljava/lang/String;"
@@ -21,6 +22,25 @@ object CodeGeneration extends Phase[Program, Unit] {
         case t:Identifier   => "L"+t.value+";"
       }
     }
+    def typeToBCType(tp:Type):String={
+      tp match {
+        case TInt     => "I";
+        case TBoolean => "Z";
+        case TString  => "Ljava/lang/String;";
+        case x:TClass => "L" + x.name + ";";
+        case v        => throw new RuntimeException("This could only be TInt, TString or TBoolean.");
+      }
+    }
+    
+    def onTypeDo(tp:Type, ifun:() => Unit, bfun:() => Unit, sfun:() => Unit, cfun:() => Unit):Unit = {
+      tp match {
+        case TInt     => ifun();
+        case TBoolean => bfun();
+        case TString  => sfun();
+        case x:TClass => cfun();
+      } 
+    } 
+    
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       val classFile = new ClassFile(ct.id.value, ct.parent map (x => x.value))
@@ -56,7 +76,7 @@ object CodeGeneration extends Phase[Program, Unit] {
           case Some(s) => s
         }
       }
-      mt.exprs:::List(mt.retExpr) map (generateExpr(ch, _, slotFor))
+      mt.exprs:::List(mt.retExpr) map (generateExpr(ch, _, slotFor, methSym))
       
       mt.retType match {
         case t:BooleanType  => ch << IRETURN
@@ -70,25 +90,51 @@ object CodeGeneration extends Phase[Program, Unit] {
       ch.freeze
     }
 
-    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int)){
+    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: MethodSymbol){
       expr match{
         case v:And        => 
-        case v:Or         =>
-        case v:Plus       =>
-        case v:Minus      =>  generateExpr(ch, v.lhs, slotFor); 
-                              generateExpr(ch, v.rhs, slotFor); 
+        case v:Or         =>  
+        case v:Plus       => { 
+                             if(v.lhs.getType==TInt && v.rhs.getType==TInt){
+                                generateExpr(ch, v.lhs, slotFor, methSym);
+                                generateExpr(ch, v.rhs, slotFor, methSym);
+                                ch << IADD;
+                              } else if (v.lhs.getType == TString || v.rhs.getType == TString){
+                                ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                generateExpr(ch, v.lhs, slotFor, methSym);
+                                
+                                ch << InvokeVirtual("java/lang/StringBuilder",
+                                                    "append", v.lhs.getType match{
+                                                      case TInt        => "(I)Ljava/lang/String;";
+                                                      case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
+                                                      case TBoolean    => "(Z)Ljava/lang/String;";
+                                                    })
+                                generateExpr(ch, v.rhs, slotFor, methSym);
+                                ch << InvokeVirtual("java/lang/StringBuilder",
+                                                   "append", v.rhs.getType match{
+                                                      case TInt        => "(I)Ljava/lang/String;";
+                                                      case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
+                                                      case TBoolean    => "(Z)Ljava/lang/String;";
+                                                    })
+                                ch << InvokeVirtual("java/lang/StringBuilder",
+                                                    "toString",
+                                                    "()Ljava/lang/String;");
+                              }
+                            }
+        case v:Minus      =>  generateExpr(ch, v.lhs, slotFor, methSym); 
+                              generateExpr(ch, v.rhs, slotFor, methSym); 
                               ch << ISUB;  
-        case v:Times      =>  generateExpr(ch, v.lhs, slotFor);
-                              generateExpr(ch, v.rhs, slotFor);
+        case v:Times      =>  generateExpr(ch, v.lhs, slotFor, methSym);
+                              generateExpr(ch, v.rhs, slotFor, methSym);
                               ch << IMUL;  
-        case v:Div        =>  generateExpr(ch, v.lhs, slotFor);
-                              generateExpr(ch, v.rhs, slotFor);
+        case v:Div        =>  generateExpr(ch, v.lhs, slotFor, methSym);
+                              generateExpr(ch, v.rhs, slotFor, methSym);
                               ch << IDIV;  
         case v:LessThan   =>{
                               val lTrue = ch.getFreshLabel("truelabel");
                               val lEnd = ch.getFreshLabel("endlabel");
-                              generateExpr(ch, v.lhs, slotFor);
-                              generateExpr(ch, v.rhs, slotFor);
+                              generateExpr(ch, v.lhs, slotFor, methSym);
+                              generateExpr(ch, v.rhs, slotFor, methSym);
                               ch << If_ICmpLt(lTrue);
                                 ch << ICONST_0;
                                 ch << Goto(lEnd);
@@ -101,8 +147,8 @@ object CodeGeneration extends Phase[Program, Unit] {
                              
                               val lTrue = ch.getFreshLabel("truelabel");
                               val lEnd = ch.getFreshLabel("endlabel");
-                              generateExpr(ch, v.lhs, slotFor);
-                              generateExpr(ch, v.rhs, slotFor);
+                              generateExpr(ch, v.lhs, slotFor, methSym);
+                              generateExpr(ch, v.rhs, slotFor, methSym);
                               ch << ISUB;
                               ch << IfEq(lTrue);
                                 ch << ICONST_0;
@@ -118,21 +164,59 @@ object CodeGeneration extends Phase[Program, Unit] {
                             }else{
                               throw new RuntimeException("WTF? this sholud not happen, types are mismatched,\n the type checker should have caught this")
                             }
-        case v:MethodCall =>  
+        case v:MethodCall => {
+                               generateExpr(ch, v.obj, slotFor, methSym);
+                               v.args map (x => generateExpr(ch, x, slotFor, methSym));
+                               v.meth.getSymbol match {
+                                  case methsym:MethodSymbol => ch << InvokeVirtual(methsym.classSymbol.name, 
+                                                               v.meth.getSymbol.name,
+                                                               "(" + (methsym.argList map (x => typeToBCType(x.getType))).mkString("") +
+                                                               ")" + typeToBCType(methsym.retType))
+                               }
+                             }
         case v:IntLit     => ch << Ldc(v.value);
         case v:StringLit  => ch << Ldc(v.value);
         case v:True       => ch << ICONST_1;
         case v:False      => ch << ICONST_0;
-        case v:Identifier => 
-        case v:This       => 
+        case v:Identifier => v.getSymbol match {
+                               case varSym:VariableSymbol => 
+                                              if(methSym.isLocalVar(v.value)){
+                                                  onTypeDo(v.getSymbol.getType,
+                                                           ()=> ILoad(slotFor(v.getSymbol.name)),
+                                                           ()=> ILoad(slotFor(v.getSymbol.name)),
+                                                           ()=> ALoad(slotFor(v.getSymbol.name)),
+                                                           ()=> ALoad(slotFor(v.getSymbol.name))
+                                                       )
+                                                } else if(methSym.isArg(v.value)){
+                                                  ArgLoad(methSym.params.keys.toArray.indexOf(v.value)+1);
+                                                } else if(methSym.isField(v.value)){
+                                                  ()=> GetField(methSym.classSymbol.name,
+                                                                v.value,
+                                                                typeToBCType(v.getSymbol.getType));
+                                                }
+                             }
+        case v:This       => ch << ArgLoad(0);
         case v:Null       => ch << ACONST_NULL;
         case v:New        => ch << DefaultNew("L"+v.tpe.value+";");
-        case v:Not        => generateExpr(ch,v.expr,slotFor);
+        case v:Not        => generateExpr(ch,v.expr,slotFor, methSym);
                              ch << INEG;
-        case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor));
+        case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor, methSym));
         case v:If         => 
         case v:While      =>  
-        case v:Println    => 
+        case v:Println    => {
+                              ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
+                              v.expr.getType match {
+                                case TString  =>  generateExpr(ch, v.expr, slotFor, methSym);
+                                case TInt     =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                                  generateExpr(ch, v.expr, slotFor, methSym);
+                                                  ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
+                                case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                                  generateExpr(ch, v.expr, slotFor, methSym);
+                                                  ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
+                              }
+                              ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+                              ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+                            }
         case v:Assign     => 
       }
 
