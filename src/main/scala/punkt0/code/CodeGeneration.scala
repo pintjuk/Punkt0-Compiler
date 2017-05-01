@@ -93,8 +93,8 @@ object CodeGeneration extends Phase[Program, Unit] {
 
     def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: MethodSymbol){
       expr match{
-        case v:And        => 
-        case v:Or         =>  
+        case v:And        =>  generateExpr(ch, new If(v.lhs, v.rhs, Some(new False) ), slotFor, methSym);
+        case v:Or         =>   generateExpr(ch, new If(v.lhs, new True, Some(v.rhs) ), slotFor, methSym);
         case v:Plus       => { 
                              if(v.lhs.getType==TInt && v.rhs.getType==TInt){
                                 generateExpr(ch, v.lhs, slotFor, methSym);
@@ -206,8 +206,32 @@ object CodeGeneration extends Phase[Program, Unit] {
         case v:Not        => generateExpr(ch,v.expr,slotFor, methSym);
                              ch << INEG;
         case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor, methSym));
-        case v:If         => 
-        case v:While      =>  
+        case v:If         => { 
+          val afterThis = ch.getFreshLabel("afterThis")
+          val afterIf   = ch.getFreshLabel("afterIf")
+          generateExpr(ch,  v.expr, slotFor, methSym);
+          ch << ICONST_0;
+          ch << If_ICmpEq(afterThis)
+          generateExpr(ch,v.thn ,slotFor, methSym);
+          ch << Goto(afterIf)
+          ch << Label(afterThis)
+          v.els match {
+            case None => 
+            case Some(elsExpr) => generateExpr(ch, elsExpr ,slotFor, methSym);
+          }
+          ch<< Label(afterIf)
+        }
+        case v:While      => {
+          val beforeWhile = ch.getFreshLabel("beforeWhile")
+          val afterWhileBody  = ch.getFreshLabel("afterWhileBody")
+          ch << Label(beforeWhile)
+          generateExpr(ch, v.cond , slotFor, methSym);
+          ch << ICONST_0
+          ch << If_ICmpEq(afterWhileBody)
+          generateExpr(ch,v.body ,slotFor, methSym);
+          ch << Goto (beforeWhile)
+          ch << Label (afterWhileBody)
+        }
         case v:Println    => {
                               ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
                               v.expr.getType match {
@@ -223,7 +247,29 @@ object CodeGeneration extends Phase[Program, Unit] {
                               ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
                               ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
                             }
-        case v:Assign     =>
+        case v:Assign     => {
+              generateExpr(ch,v.expr ,slotFor, methSym);
+              v.id.getSymbol match {
+                case varSym:VariableSymbol => 
+                              if(methSym.isLocalVar(v.id.value)){
+                                  onTypeDo(v.id.getSymbol.getType,
+                                           ()=> IStore(slotFor(v.id.getSymbol.name)),
+                                           ()=> IStore(slotFor(v.id.getSymbol.name)),
+                                           ()=> AStore(slotFor(v.id.getSymbol.name)),
+                                           ()=> AStore(slotFor(v.id.getSymbol.name))
+                                       )
+                                } else if(methSym.isArg(v.id.value)){
+                                  Reporter.error("cant reasign an argument", v);
+                                } else if(methSym.isField(v.id.value)){
+                                  ()=> PutField(methSym.classSymbol.name,
+                                                v.id.value,
+                                                typeToBCType(v.id.getSymbol.getType));
+                                }else{
+
+                                }
+                case notVarsym            => throw new RuntimeException ("WTF? something went worng in name analysis or type checking, indentefiers in expressions must be variable names and have  have a var symbol attached");
+             }
+        }
         case v            => throw new RuntimeException ("WTF? bad input to this function, the input to this function should be an expression tree");
       }
 

@@ -3,6 +3,8 @@
 // I guess everyone saw that one coming :)
 
 class DrunkPirate {
+  var test:Int=0;
+  var test2:Int=test+2;
 def lel(): Boolean={
   true
 }

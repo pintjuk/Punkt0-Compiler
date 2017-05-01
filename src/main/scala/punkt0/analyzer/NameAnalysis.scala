@@ -12,6 +12,31 @@ object NameAnalysis extends Phase[Program, Program] {
     var globalScope = new Symbols.GlobalScope
     globalScope.classes += {"App" -> new ClassSymbol("App")}
 
+    def isConstant(expr:ExprTree):Boolean = expr match{
+        case v:And        =>  false
+        case v:Or         =>  false
+        case v:Plus       =>  false
+        case v:Minus      =>  false
+        case v:Times      =>  false
+        case v:Div        =>  false
+        case v:LessThan   =>  false
+        case v:Equals     =>  false
+        case v:MethodCall =>  false
+        case v:IntLit     =>  true
+        case v:StringLit  =>  true
+        case v:True       =>  true
+        case v:False      =>  true
+        case v:Identifier =>  false
+        case v:This       =>  false
+        case v:Null       =>  true
+        case v:New        =>  true
+        case v:Not        =>  false
+        case v:Block      =>  false
+        case v:If         =>  false
+        case v:While      =>  false
+        case v:Println    =>  false
+        case v:Assign     =>  false
+    }
     def collectClasses(cl: ClassDecl){
 		       
       globalScope.classes get cl.id.value match{
@@ -91,6 +116,8 @@ object NameAnalysis extends Phase[Program, Program] {
   	}
 
   	def collectFields(v: VarDecl, scope: ClassSymbol){
+      if(!isConstant(v.expr))
+        Reporter.error("assigment in fealds daclaration must be constant or new",v.expr)
       scope.lookupVar(v.id.value) match{
         case None => scope.lookupMethod(v.id.value) match{
           case None=>{
@@ -154,6 +181,8 @@ object NameAnalysis extends Phase[Program, Program] {
       }
   	}
   	def collectVars(v: VarDecl, scope: MethodSymbol){
+      if(!isConstant(v.expr))
+        Reporter.error("assigment in variable daclaration must be constant or new",v.expr)
       scope.params get v.id.value match{
         case None => scope.params get v.id.value match {
           case None=> {
