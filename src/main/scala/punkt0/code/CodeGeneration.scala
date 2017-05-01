@@ -46,8 +46,15 @@ object CodeGeneration extends Phase[Program, Unit] {
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       val classFile = new ClassFile(ct.id.value, ct.parent map (x => x.value))
       classFile.setSourceFile(ct.file.getPath)
-      
-      ct.vars map (x =>  classFile.addField( makeType(x.tpe), x.id.value));
+      val dcch = classFile.addDefaultConstructor.codeHandler
+
+      ct.vars map (x => {
+        classFile.addField( makeType(x.tpe), x.id.value)
+        def l(y:String): Int = 0;
+        generateExpr(dcch, x.expr, l , prog.main.getSymbol )
+        dcch << PutField(ct.id.value, x.id.value,
+                         typeToBCType(x.id.getSymbol.getType));
+      });
       ct.methods map ( mth => 
           generateMethodCode( 
             classFile.addMethod(
@@ -91,39 +98,41 @@ object CodeGeneration extends Phase[Program, Unit] {
       ch.freeze
     }
 
-    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: MethodSymbol){
+    def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: Symbol){
       expr match{
         case v:And        =>  generateExpr(ch, new If(v.lhs, v.rhs, Some(new False) ), slotFor, methSym);
         case v:Or         =>   generateExpr(ch, new If(v.lhs, new True, Some(v.rhs) ), slotFor, methSym);
         case v:Plus       => { 
-                             if(v.lhs.getType==TInt && v.rhs.getType==TInt){
-                                generateExpr(ch, v.lhs, slotFor, methSym);
-                                generateExpr(ch, v.rhs, slotFor, methSym);
-                                ch << IADD;
-                              } else if (v.lhs.getType == TString || v.rhs.getType == TString){
-                                ch << DefaultNew("Ljava/lang/StringBuilder;");
-                                generateExpr(ch, v.lhs, slotFor, methSym);
-                                
-                                ch << InvokeVirtual("java/lang/StringBuilder",
-                                                    "append", v.lhs.getType match{
-                                                      case TInt        => "(I)Ljava/lang/String;";
-                                                      case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
-                                                      case TBoolean    => "(Z)Ljava/lang/String;";
-                                                      case v           => throw new RuntimeException("WTF? this should not happen, type checker should have thrown an error if one of operands to plus is not int string or bool");
-                                                    })
-                                generateExpr(ch, v.rhs, slotFor, methSym);
-                                ch << InvokeVirtual("java/lang/StringBuilder",
-                                                   "append", v.rhs.getType match{
-                                                      case TInt        => "(I)Ljava/lang/String;";
-                                                      case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
-                                                      case TBoolean    => "(Z)Ljava/lang/String;";
-                                                      case v           => throw new RuntimeException("WTF? this should not happen, type checker should have thrown an error if one of operands to plus is not int string or bool");
-                                                    })
-                                ch << InvokeVirtual("java/lang/StringBuilder",
-                                                    "toString",
-                                                    "()Ljava/lang/String;");
-                              }
-                            }
+          if(v.lhs.getType==TInt && v.rhs.getType==TInt){
+            generateExpr(ch, v.lhs, slotFor, methSym);
+            generateExpr(ch, v.rhs, slotFor, methSym);
+            ch << IADD;
+          } else if (v.lhs.getType == TString || v.rhs.getType == TString){
+            ch << DefaultNew("Ljava/lang/StringBuilder;");
+            generateExpr(ch, v.lhs, slotFor, methSym);
+            
+            ch << InvokeVirtual("java/lang/StringBuilder",
+                                "append", v.lhs.getType match{
+                                  case TInt        => "(I)Ljava/lang/String;";
+                                  case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
+                                  case TBoolean    => "(Z)Ljava/lang/String;";
+                                  case v           => throw new RuntimeException("WTF? this should not happen,"+
+                                    "type checker should have thrown an error if one of operands to plus is not int string or bool");
+                                })
+            generateExpr(ch, v.rhs, slotFor, methSym);
+            ch << InvokeVirtual("java/lang/StringBuilder",
+                               "append", v.rhs.getType match{
+                                  case TInt        => "(I)Ljava/lang/String;";
+                                  case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
+                                  case TBoolean    => "(Z)Ljava/lang/String;";
+                                  case v           => throw new RuntimeException("WTF? this should not happen,"+
+                                    " type checker should have thrown an error if one of operands to plus is not int string or bool");
+                                })
+            ch << InvokeVirtual("java/lang/StringBuilder",
+                                "toString",
+                                "()Ljava/lang/String;");
+          }
+        }
         case v:Minus      =>  generateExpr(ch, v.lhs, slotFor, methSym); 
                               generateExpr(ch, v.rhs, slotFor, methSym); 
                               ch << ISUB;  
@@ -182,25 +191,41 @@ object CodeGeneration extends Phase[Program, Unit] {
         case v:StringLit  => ch << Ldc(v.value);
         case v:True       => ch << ICONST_1;
         case v:False      => ch << ICONST_0;
-        case v:Identifier => v.getSymbol match {
-                                case varSym:VariableSymbol => 
-                                              if(methSym.isLocalVar(v.value)){
-                                                  onTypeDo(v.getSymbol.getType,
-                                                           ()=> ILoad(slotFor(v.getSymbol.name)),
-                                                           ()=> ILoad(slotFor(v.getSymbol.name)),
-                                                           ()=> ALoad(slotFor(v.getSymbol.name)),
-                                                           ()=> ALoad(slotFor(v.getSymbol.name))
-                                                       )
-                                                } else if(methSym.isArg(v.value)){
-                                                  ArgLoad(methSym.params.keys.toArray.indexOf(v.value)+1);
-                                                } else if(methSym.isField(v.value)){
-                                                  ()=> GetField(methSym.classSymbol.name,
-                                                                v.value,
-                                                                typeToBCType(v.getSymbol.getType));
-                                                }
-                                case notVarsym            => throw new RuntimeException ("WTF? something went worng in name analysis or type checking, indentefiers in expressions must be variable names and have  have a var symbol attached");
-                             }
-        case v:This       => ch << ArgLoad(0);
+        case v:Identifier =>{
+          methSym match{
+            case methsymbol:MethodSymbol => v.getSymbol match {
+              case varSym:VariableSymbol => {
+                 if(methsymbol.isLocalVar(v.value)){
+                    onTypeDo(v.getSymbol.getType,
+                             ()=> ILoad(slotFor(v.getSymbol.name)),
+                             ()=> ILoad(slotFor(v.getSymbol.name)),
+                             ()=> ALoad(slotFor(v.getSymbol.name)),
+                             ()=> ALoad(slotFor(v.getSymbol.name))
+                         )
+                  } else if(methSymbol.isArg(v.value)){
+                    ArgLoad(methSymbol.params.keys.toArray.indexOf(v.value)+1);
+                  } else if(methSymbol.isField(v.value)){
+                    ()=> GetField(methSymbol.classSymbol.name,
+                                  v.value,
+                                  typeToBCType(v.getSymbol.getType));
+                  }
+              }
+              case notVarsym => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+
+                                                            "indentefiers in expressions must be variable names and have  have a var symbol attached");
+            }
+            case classSymbol:ClassSymbol => v.getSymbol match {
+              case varSym:VariableSymbol => if(classSymbol.isArg(v.value)){
+                  GetField(classSymbol.classSymbol.name,
+                            v.value,
+                           typeToBCType(v.getSymbol.getType)
+                        );
+                }
+              case notVarsym => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+ 
+                                                          "indentefiers in expressions must be variable names and have  have a var symbol attached");
+            }
+          }
+        }
+        case v:This       => ch << ArgLoad(0); // TODO: WhatHappens if this is called in main?
         case v:Null       => ch << ACONST_NULL;
         case v:New        => ch << DefaultNew("L"+v.tpe.value+";");
         case v:Not        => generateExpr(ch,v.expr,slotFor, methSym);
@@ -233,47 +258,59 @@ object CodeGeneration extends Phase[Program, Unit] {
           ch << Label (afterWhileBody)
         }
         case v:Println    => {
-                              ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
-                              v.expr.getType match {
-                                case TString  =>  generateExpr(ch, v.expr, slotFor, methSym);
-                                case TInt     =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
-                                                  generateExpr(ch, v.expr, slotFor, methSym);
-                                                  ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
-                                case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
-                                                  generateExpr(ch, v.expr, slotFor, methSym);
-                                                  ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
-                                case other    => throw new RuntimeException ("WTF? somethnig went wrong in the type checker, input to printline must be string, int or boolean!")
-                              }
-                              ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-                              ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
-                            }
-        case v:Assign     => {
-              generateExpr(ch,v.expr ,slotFor, methSym);
-              v.id.getSymbol match {
-                case varSym:VariableSymbol => 
-                              if(methSym.isLocalVar(v.id.value)){
-                                  onTypeDo(v.id.getSymbol.getType,
-                                           ()=> IStore(slotFor(v.id.getSymbol.name)),
-                                           ()=> IStore(slotFor(v.id.getSymbol.name)),
-                                           ()=> AStore(slotFor(v.id.getSymbol.name)),
-                                           ()=> AStore(slotFor(v.id.getSymbol.name))
-                                       )
-                                } else if(methSym.isArg(v.id.value)){
-                                  Reporter.error("cant reasign an argument", v);
-                                } else if(methSym.isField(v.id.value)){
-                                  ()=> PutField(methSym.classSymbol.name,
-                                                v.id.value,
-                                                typeToBCType(v.id.getSymbol.getType));
-                                }else{
-
-                                }
-                case notVarsym            => throw new RuntimeException ("WTF? something went worng in name analysis or type checking, indentefiers in expressions must be variable names and have  have a var symbol attached");
-             }
+                ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
+                v.expr.getType match {
+                  case TString  =>  generateExpr(ch, v.expr, slotFor, methSym);
+                  case TInt     =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                    generateExpr(ch, v.expr, slotFor, methSym);
+                                    ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
+                  case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                    generateExpr(ch, v.expr, slotFor, methSym);
+                                    ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
+                  case other    => throw new RuntimeException ("WTF? somethnig went wrong in the type checker, input to printline must be string, int or boolean!")
+                }
+                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+                ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
         }
-        case v            => throw new RuntimeException ("WTF? bad input to this function, the input to this function should be an expression tree");
-      }
+        case v:Assign     => {
+          generateExpr(ch,v.expr ,slotFor, methSym);
+          v.id.getSymbol match {
+            case varSym:VariableSymbol => { 
+              methSym match{
+                case methSymbol:MethodSymbol =>{
+                  if(methSymbol.isLocalVar(v.id.value)){
+                    onTypeDo(v.id.getSymbol.getType,
+                             ()=> IStore(slotFor(v.id.getSymbol.name)),
+                             ()=> IStore(slotFor(v.id.getSymbol.name)),
+                             ()=> AStore(slotFor(v.id.getSymbol.name)),
+                             ()=> AStore(slotFor(v.id.getSymbol.name))
+                             )
+                  } else if(methSymbol.isArg(v.id.value)){
+                    Reporter.error("cant reasign an argument", v);
+                  } else if(methSymbol.isField(v.id.value)){
+                    PutField(methSymbol.classSymbol.name, v.id.value,
+                    typeToBCType(v.id.getSymbol.getType));
+                  }else{
 
+                  }
+                }
+                case classSym:ClassSymbol => {
+                      if(classSym.isField(v.id.value)){
+                        PutField(classSym.classSymbol.name, v.id.value,
+                                 typeToBCType(v.id.getSymbol.getType));
+                      }else{
+                      }
+                }
+              }
+            }
+            case notVarsym  => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+ 
+                                                               "indentefiers in expressions must be variable names and have  have a var symbol attached");
+        }
+      }
+      case v => throw new RuntimeException ("WTF? bad input to this function, the input to this function should be an expression tree");
     }
+
+    
 
     val outDir = ctx.outDir.map(_.getPath+"/").getOrElse("./")
 
@@ -290,7 +327,24 @@ object CodeGeneration extends Phase[Program, Unit] {
     }
 
     // Now do the main declaration
-    // ...
+    val mainClassFile =  new ClassFile("Main", None)
+    val mainCH = mainClassFile.addMainMethod.codeHandler
+    var slots = Map[String, Int]();
+    def slotFor(name: String): Int = {
+      slots get name match{
+        case None => {
+          val r = ch.getFreshVar;
+          slots += (name -> r);
+          r;
+        }
+        case Some(s) => s
+      }
+    }
+    prog.main.exprs  map (generateExpr(mainCH, _, slotFor, prog.main.getSymbol))
+    mainCH << ICONST_0 << IRETURN
+    mainClassFile.writeToFile(dir + "/" + ct.id.value + ".class" );
+
+
   }
 
 }
