@@ -38,6 +38,7 @@ object CodeGeneration extends Phase[Program, Unit] {
         case TBoolean => bfun();
         case TString  => sfun();
         case x:TClass => cfun();
+        case x        => throw new RuntimeException ("WTF? this should not happen, something went worng in type checking, recived unvalid type");
       } 
     } 
     
@@ -108,6 +109,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                       case TInt        => "(I)Ljava/lang/String;";
                                                       case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
                                                       case TBoolean    => "(Z)Ljava/lang/String;";
+                                                      case v           => throw new RuntimeException("WTF? this should not happen, type checker should have thrown an error if one of operands to plus is not int string or bool");
                                                     })
                                 generateExpr(ch, v.rhs, slotFor, methSym);
                                 ch << InvokeVirtual("java/lang/StringBuilder",
@@ -115,6 +117,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                       case TInt        => "(I)Ljava/lang/String;";
                                                       case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
                                                       case TBoolean    => "(Z)Ljava/lang/String;";
+                                                      case v           => throw new RuntimeException("WTF? this should not happen, type checker should have thrown an error if one of operands to plus is not int string or bool");
                                                     })
                                 ch << InvokeVirtual("java/lang/StringBuilder",
                                                     "toString",
@@ -172,6 +175,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                                v.meth.getSymbol.name,
                                                                "(" + (methsym.argList map (x => typeToBCType(x.getType))).mkString("") +
                                                                ")" + typeToBCType(methsym.retType))
+                                  case notmethsym           => throw new RuntimeException ("WTF? something went worng in name analysis or type checking, methCall should have a method symbol attached");
                                }
                              }
         case v:IntLit     => ch << Ldc(v.value);
@@ -179,7 +183,7 @@ object CodeGeneration extends Phase[Program, Unit] {
         case v:True       => ch << ICONST_1;
         case v:False      => ch << ICONST_0;
         case v:Identifier => v.getSymbol match {
-                               case varSym:VariableSymbol => 
+                                case varSym:VariableSymbol => 
                                               if(methSym.isLocalVar(v.value)){
                                                   onTypeDo(v.getSymbol.getType,
                                                            ()=> ILoad(slotFor(v.getSymbol.name)),
@@ -194,6 +198,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                                 v.value,
                                                                 typeToBCType(v.getSymbol.getType));
                                                 }
+                                case notVarsym            => throw new RuntimeException ("WTF? something went worng in name analysis or type checking, indentefiers in expressions must be variable names and have  have a var symbol attached");
                              }
         case v:This       => ch << ArgLoad(0);
         case v:Null       => ch << ACONST_NULL;
@@ -213,11 +218,13 @@ object CodeGeneration extends Phase[Program, Unit] {
                                 case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
                                                   generateExpr(ch, v.expr, slotFor, methSym);
                                                   ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
+                                case other    => throw new RuntimeException ("WTF? somethnig went wrong in the type checker, input to printline must be string, int or boolean!")
                               }
                               ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
                               ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
                             }
-        case v:Assign     => 
+        case v:Assign     =>
+        case v            => throw new RuntimeException ("WTF? bad input to this function, the input to this function should be an expression tree");
       }
 
     }
