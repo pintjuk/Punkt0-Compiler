@@ -4,7 +4,7 @@ public class HelloWorld {
         // Prints "Hello, World" to the terminal window.
         
         for(int i=0; i<2;i++){
-            boolean hej = i<i;
+            String lel  = "aoeu"+i;
         }
     }
 
