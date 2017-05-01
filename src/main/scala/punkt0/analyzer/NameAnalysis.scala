@@ -207,6 +207,7 @@ object NameAnalysis extends Phase[Program, Program] {
     })
   	collectMain(prog.main);
 
+    println("************************************************************************")
 
     // Step 2: Attach symbols to identifiers (except method calls) in method bodies
 

@@ -154,28 +154,37 @@ object CodeGeneration extends Phase[Program, Unit] {
                                 ch << ICONST_1;
                               ch << Label(lEnd);
                             }
-        case v:Equals     => if(v.lhs.getType==TInt && v.rhs.getType==TInt)  
-                            {
-                             
-                              val lTrue = ch.getFreshLabel("truelabel");
-                              val lEnd = ch.getFreshLabel("endlabel");
-                              generateExpr(ch, v.lhs, slotFor, methSym);
-                              generateExpr(ch, v.rhs, slotFor, methSym);
-                              ch << ISUB;
-                              ch << IfEq(lTrue);
-                                ch << ICONST_0;
-                                ch << Goto(lEnd);
-                              ch << Label(lTrue);
-                                ch << ICONST_1;
-                              ch << Label(lEnd);
-                            }else if (v.lhs.getType==TBoolean && v.rhs.getType==TBoolean) {
-                              //TODO boolean lazy compare 
-                            }else if ((v.lhs.getType==TString && v.rhs.getType==TString) || 
-                                      (v.lhs.getType.isInstanceOf[TClass] && v.rhs.getType.isInstanceOf[TClass])) {
-                                        //TODO: compare by reference
-                            }else{
-                              throw new RuntimeException("WTF? this sholud not happen, types are mismatched,\n the type checker should have caught this")
-                            }
+        case v:Equals     => {
+          if( (v.lhs.getType==TInt && v.rhs.getType==TInt)||
+              (v.lhs.getType==TBoolean && v.rhs.getType==TBoolean) ){
+            val lTrue = ch.getFreshLabel("truelabel");
+            val lEnd = ch.getFreshLabel("endlabel");
+            generateExpr(ch, v.lhs, slotFor, methSym);
+            generateExpr(ch, v.rhs, slotFor, methSym);
+            ch << ISUB;
+            ch << IfEq(lTrue);
+              ch << ICONST_0;
+              ch << Goto(lEnd);
+            ch << Label(lTrue);
+              ch << ICONST_1;
+            ch << Label(lEnd);
+          }else if ((v.lhs.getType==TString && v.rhs.getType==TString) || 
+                    (v.lhs.getType.isInstanceOf[TClass] && v.rhs.getType.isInstanceOf[TClass])) {
+            val lTrue = ch.getFreshLabel("truelabel");
+            val lEnd = ch.getFreshLabel("endlabel");
+            generateExpr(ch, v.lhs, slotFor, methSym);
+            generateExpr(ch, v.rhs, slotFor, methSym);
+            ch << ISUB;
+            ch << If_ACmpEq(lTrue);
+              ch << ICONST_0;
+              ch << Goto(lEnd);
+            ch << Label(lTrue);
+              ch << ICONST_1;
+            ch << Label(lEnd);
+          }else{
+            throw new RuntimeException("WTF? this sholud not happen, types are mismatched,\n the type checker should have caught this")
+          }
+        }
         case v:MethodCall => {
                                generateExpr(ch, v.obj, slotFor, methSym);
                                v.args map (x => generateExpr(ch, x, slotFor, methSym));
@@ -202,10 +211,10 @@ object CodeGeneration extends Phase[Program, Unit] {
                              ()=> ALoad(slotFor(v.getSymbol.name)),
                              ()=> ALoad(slotFor(v.getSymbol.name))
                          )
-                  } else if(methSymbol.isArg(v.value)){
-                    ArgLoad(methSymbol.params.keys.toArray.indexOf(v.value)+1);
-                  } else if(methSymbol.isField(v.value)){
-                    ()=> GetField(methSymbol.classSymbol.name,
+                  } else if(methsymbol.isArg(v.value)){
+                    ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
+                  } else if(methsymbol.isField(v.value)){
+                    ()=> GetField(methsymbol.classSymbol.name,
                                   v.value,
                                   typeToBCType(v.getSymbol.getType));
                   }
@@ -214,12 +223,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                             "indentefiers in expressions must be variable names and have  have a var symbol attached");
             }
             case classSymbol:ClassSymbol => v.getSymbol match {
-              case varSym:VariableSymbol => if(classSymbol.isArg(v.value)){
-                  GetField(classSymbol.classSymbol.name,
-                            v.value,
-                           typeToBCType(v.getSymbol.getType)
-                        );
-                }
+              case varSym:VariableSymbol => GetField(classSymbol.name, v.value,typeToBCType(v.getSymbol.getType));
               case notVarsym => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+ 
                                                           "indentefiers in expressions must be variable names and have  have a var symbol attached");
             }
@@ -264,12 +268,13 @@ object CodeGeneration extends Phase[Program, Unit] {
                   case TInt     =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
                                     generateExpr(ch, v.expr, slotFor, methSym);
                                     ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
+                                    ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
                   case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
                                     generateExpr(ch, v.expr, slotFor, methSym);
                                     ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
+                                    ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
                   case other    => throw new RuntimeException ("WTF? somethnig went wrong in the type checker, input to printline must be string, int or boolean!")
                 }
-                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
                 ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
         }
         case v:Assign     => {
@@ -295,11 +300,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                   }
                 }
                 case classSym:ClassSymbol => {
-                      if(classSym.isField(v.id.value)){
-                        PutField(classSym.classSymbol.name, v.id.value,
-                                 typeToBCType(v.id.getSymbol.getType));
-                      }else{
-                      }
+                  PutField(classSym.name, v.id.value, typeToBCType(v.id.getSymbol.getType));
                 }
               }
             }
@@ -307,8 +308,11 @@ object CodeGeneration extends Phase[Program, Unit] {
                                                                "indentefiers in expressions must be variable names and have  have a var symbol attached");
         }
       }
+      
       case v => throw new RuntimeException ("WTF? bad input to this function, the input to this function should be an expression tree");
     }
+    }
+    
 
     
 
@@ -329,20 +333,24 @@ object CodeGeneration extends Phase[Program, Unit] {
     // Now do the main declaration
     val mainClassFile =  new ClassFile("Main", None)
     val mainCH = mainClassFile.addMainMethod.codeHandler
+    mainClassFile.addDefaultConstructor
     var slots = Map[String, Int]();
     def slotFor(name: String): Int = {
       slots get name match{
         case None => {
-          val r = ch.getFreshVar;
+          val r = mainCH.getFreshVar;
           slots += (name -> r);
           r;
         }
         case Some(s) => s
       }
     }
+    prog.main.getSymbol
     prog.main.exprs  map (generateExpr(mainCH, _, slotFor, prog.main.getSymbol))
-    mainCH << ICONST_0 << IRETURN
-    mainClassFile.writeToFile(dir + "/" + ct.id.value + ".class" );
+    //mainCH << ICONST_0 << IRETURN
+    mainCH << RETURN
+    mainCH.freeze
+    mainClassFile.writeToFile(outDir + "/Main.class" );
 
 
   }

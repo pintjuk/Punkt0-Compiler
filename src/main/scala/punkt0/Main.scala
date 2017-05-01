@@ -106,7 +106,7 @@ object Main {
       if(ctx.doPrintMain){
         println(Printer.apply(tree));
       }else{
-        CodeGeneration.run(tree)(ctx);
+        NameAnalysis.andThen(TypeChecking).andThen(CodeGeneration).run(tree)(ctx);
       }
     }
   }

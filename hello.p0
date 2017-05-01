@@ -1,0 +1,10 @@
+
+// This is a simple implementation of '99 bottles of beer' in Punkt0.
+// I guess everyone saw that one coming :)
+
+
+
+object Main extends App {
+  println("Hello World!")
+}
+
