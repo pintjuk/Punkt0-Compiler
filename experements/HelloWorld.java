@@ -1,7 +1,8 @@
 public class HelloWorld {
 
     public static void main(String[] args) {
-        System.out.println("aoeu");
+      int hej=1;
+        System.out.println("hej"+hej);
     }
 
 }

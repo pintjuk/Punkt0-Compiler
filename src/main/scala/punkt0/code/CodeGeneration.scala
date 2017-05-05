@@ -12,6 +12,10 @@ object CodeGeneration extends Phase[Program, Unit] {
 
   def run(prog: Program)(ctx: Context): Unit = {
 
+    val main_name= (ctx.file match {
+      case Some(f) => f.getName().split('.').head
+      case None    => "Main" 
+    })
 
     def makeType(tp:TypeTree):String={
       tp match {
@@ -27,6 +31,7 @@ object CodeGeneration extends Phase[Program, Unit] {
         case TInt     => "I";
         case TBoolean => "Z";
         case TString  => "Ljava/lang/String;";
+        case TUnit    => "V";
         case x:TClass => "L" + x.name + ";";
         case v        => throw new RuntimeException("This could only be TInt, TString or TBoolean.");
       }
@@ -46,9 +51,10 @@ object CodeGeneration extends Phase[Program, Unit] {
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       val classFile = new ClassFile(ct.id.value, ct.parent map (x => x.value))
       classFile.setSourceFile(ct.file.getPath)
-      val dcch = classFile.addDefaultConstructor.codeHandler
+      val dcch = classFile.addConstructor(Nil).codeHandler
 
       ct.vars map (x => {
+        /*TODO: call superclas constrtuctor*/
         classFile.addField( makeType(x.tpe), x.id.value)
         def l(y:String): Int = 0;
         generateExpr(dcch, x.expr, l , prog.main.getSymbol )
@@ -84,6 +90,7 @@ object CodeGeneration extends Phase[Program, Unit] {
           case Some(s) => s
         }
       }
+      mt.vars map (va => generateExpr(ch, new Assign(va.id, va.expr), slotFor, methSym))
       mt.exprs:::List(mt.retExpr) map (generateExpr(ch, _, slotFor, methSym))
       
       mt.retType match {
@@ -94,6 +101,7 @@ object CodeGeneration extends Phase[Program, Unit] {
         case t:Identifier   => ch << ARETURN
       }
 
+      ch.print
 
       ch.freeze
     }
@@ -108,23 +116,23 @@ object CodeGeneration extends Phase[Program, Unit] {
             generateExpr(ch, v.rhs, slotFor, methSym);
             ch << IADD;
           } else if (v.lhs.getType == TString || v.rhs.getType == TString){
-            ch << DefaultNew("Ljava/lang/StringBuilder;");
+            ch << DefaultNew("java/lang/StringBuilder");
             generateExpr(ch, v.lhs, slotFor, methSym);
             
             ch << InvokeVirtual("java/lang/StringBuilder",
                                 "append", v.lhs.getType match{
-                                  case TInt        => "(I)Ljava/lang/String;";
+                                  case TInt        => "(I)Ljava/lang/StringBuilder;";
                                   case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
-                                  case TBoolean    => "(Z)Ljava/lang/String;";
+                                  case TBoolean    => "(Z)Ljava/lang/StringBuilder;";
                                   case v           => throw new RuntimeException("WTF? this should not happen,"+
                                     "type checker should have thrown an error if one of operands to plus is not int string or bool");
                                 })
             generateExpr(ch, v.rhs, slotFor, methSym);
             ch << InvokeVirtual("java/lang/StringBuilder",
                                "append", v.rhs.getType match{
-                                  case TInt        => "(I)Ljava/lang/String;";
+                                  case TInt        => "(I)Ljava/lang/StringBuilder;";
                                   case TString     => "(Ljava/lang/String;)Ljava/lang/StringBuilder;";
-                                  case TBoolean    => "(Z)Ljava/lang/String;";
+                                  case TBoolean    => "(Z)Ljava/lang/StringBuilder;";
                                   case v           => throw new RuntimeException("WTF? this should not happen,"+
                                     " type checker should have thrown an error if one of operands to plus is not int string or bool");
                                 })
@@ -206,24 +214,30 @@ object CodeGeneration extends Phase[Program, Unit] {
               case varSym:VariableSymbol => {
                  if(methsymbol.isLocalVar(v.value)){
                     onTypeDo(v.getSymbol.getType,
-                             ()=> ILoad(slotFor(v.getSymbol.name)),
-                             ()=> ILoad(slotFor(v.getSymbol.name)),
-                             ()=> ALoad(slotFor(v.getSymbol.name)),
-                             ()=> ALoad(slotFor(v.getSymbol.name))
+                             ()=>ch << ILoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ILoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ALoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ALoad(slotFor(v.getSymbol.name))
                          )
                   } else if(methsymbol.isArg(v.value)){
-                    ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
+                    ch << ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
                   } else if(methsymbol.isField(v.value)){
-                    ()=> GetField(methsymbol.classSymbol.name,
-                                  v.value,
-                                  typeToBCType(v.getSymbol.getType));
+                    ch << GetField(methsymbol.classSymbol.name, v.value,  typeToBCType(v.getSymbol.getType));
                   }
               }
               case notVarsym => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+
                                                             "indentefiers in expressions must be variable names and have  have a var symbol attached");
             }
             case classSymbol:ClassSymbol => v.getSymbol match {
-              case varSym:VariableSymbol => GetField(classSymbol.name, v.value,typeToBCType(v.getSymbol.getType));
+              case varSym:VariableSymbol => 
+                 // GetField(classSymbol.name, v.value,typeToBCType(v.getSymbol.getType));
+                   onTypeDo(v.getSymbol.getType,
+                             ()=>ch << ILoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ILoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ALoad(slotFor(v.getSymbol.name)),
+                             ()=>ch << ALoad(slotFor(v.getSymbol.name))
+                         )
+
               case notVarsym => throw new RuntimeException ("WTF? something went worng in name analysis or type checking,"+ 
                                                           "indentefiers in expressions must be variable names and have  have a var symbol attached");
             }
@@ -231,9 +245,10 @@ object CodeGeneration extends Phase[Program, Unit] {
         }
         case v:This       => ch << ArgLoad(0); // TODO: WhatHappens if this is called in main?
         case v:Null       => ch << ACONST_NULL;
-        case v:New        => ch << DefaultNew("L"+v.tpe.value+";");
-        case v:Not        => generateExpr(ch,v.expr,slotFor, methSym);
-                             ch << INEG;
+        case v:New        => ch << DefaultNew(v.tpe.value);
+        case v:Not        => //generateExpr(ch,v.expr,slotFor, methSym);
+                             //ch << INEG;
+                            generateExpr(ch, new If(v.expr, new False, Some(new True)),slotFor,methSym)
         case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor, methSym));
         case v:If         => { 
           val afterThis = ch.getFreshLabel("afterThis")
@@ -265,17 +280,19 @@ object CodeGeneration extends Phase[Program, Unit] {
                 ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
                 v.expr.getType match {
                   case TString  =>  generateExpr(ch, v.expr, slotFor, methSym);
-                  case TInt     =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                    ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+                  case TInt     =>  //ch << DefaultNew("Ljava/lang/StringBuilder;");
                                     generateExpr(ch, v.expr, slotFor, methSym);
-                                    ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
-                                    ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-                  case TBoolean =>  ch << DefaultNew("Ljava/lang/StringBuilder;");
+                                    //ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/String;")
+                                    //ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+                                    ch << InvokeVirtual("java/io/PrintStream", "println", "(I)V");
+                  case TBoolean =>  //ch << DefaultNew("Ljava/lang/StringBuilder;");
                                     generateExpr(ch, v.expr, slotFor, methSym);
-                                    ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
-                                    ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+                                    //ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/String;")
+                                    //ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+                                    ch << InvokeVirtual("java/io/PrintStream", "println", "(Z)V");
                   case other    => throw new RuntimeException ("WTF? somethnig went wrong in the type checker, input to printline must be string, int or boolean!")
                 }
-                ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V");
         }
         case v:Assign     => {
           generateExpr(ch,v.expr ,slotFor, methSym);
@@ -285,10 +302,10 @@ object CodeGeneration extends Phase[Program, Unit] {
                 case methSymbol:MethodSymbol =>{
                   if(methSymbol.isLocalVar(v.id.value)){
                     onTypeDo(v.id.getSymbol.getType,
-                             ()=> IStore(slotFor(v.id.getSymbol.name)),
-                             ()=> IStore(slotFor(v.id.getSymbol.name)),
-                             ()=> AStore(slotFor(v.id.getSymbol.name)),
-                             ()=> AStore(slotFor(v.id.getSymbol.name))
+                             ()=> ch << IStore(slotFor(v.id.getSymbol.name)),
+                             ()=> ch << IStore(slotFor(v.id.getSymbol.name)),
+                             ()=> ch << AStore(slotFor(v.id.getSymbol.name)),
+                             ()=> ch << AStore(slotFor(v.id.getSymbol.name))
                              )
                   } else if(methSymbol.isArg(v.id.value)){
                     Reporter.error("cant reasign an argument", v);
@@ -300,7 +317,13 @@ object CodeGeneration extends Phase[Program, Unit] {
                   }
                 }
                 case classSym:ClassSymbol => {
-                  PutField(classSym.name, v.id.value, typeToBCType(v.id.getSymbol.getType));
+                  onTypeDo(v.id.getSymbol.getType,
+                             ()=> {ch << IStore(slotFor(v.id.getSymbol.name))},
+                             ()=> {ch << IStore(slotFor(v.id.getSymbol.name))},
+                             ()=> {ch << AStore(slotFor(v.id.getSymbol.name))},
+                             ()=> {ch << AStore(slotFor(v.id.getSymbol.name))}
+                             )
+                  //PutField(classSym.name, v.id.value, typeToBCType(v.id.getSymbol.getType));
                 }
               }
             }
@@ -331,7 +354,7 @@ object CodeGeneration extends Phase[Program, Unit] {
     }
 
     // Now do the main declaration
-    val mainClassFile =  new ClassFile("Main", None)
+    val mainClassFile =  new ClassFile(main_name, None)
     val mainCH = mainClassFile.addMainMethod.codeHandler
     mainClassFile.addDefaultConstructor
     var slots = Map[String, Int]();
@@ -345,12 +368,13 @@ object CodeGeneration extends Phase[Program, Unit] {
         case Some(s) => s
       }
     }
-    prog.main.getSymbol
+    prog.main.vars map (va =>{
+      generateExpr(mainCH, new Assign(va.id, va.expr), slotFor, prog.main.getSymbol)
+    })
     prog.main.exprs  map (generateExpr(mainCH, _, slotFor, prog.main.getSymbol))
-    //mainCH << ICONST_0 << IRETURN
     mainCH << RETURN
     mainCH.freeze
-    mainClassFile.writeToFile(outDir + "/Main.class" );
+    mainClassFile.writeToFile(outDir+main_name+".class" );
 
 
   }

@@ -2,9 +2,15 @@
 // This is a simple implementation of '99 bottles of beer' in Punkt0.
 // I guess everyone saw that one coming :)
 
-
+class aoeu {
+ var foo:Int = 10;
+  def print():Int={
+    foo
+  }
+}
 
 object Main extends App {
-  println("Hello World!")
+  var foo:aoeu = new aoeu();
+  println(foo.print())
 }
 
