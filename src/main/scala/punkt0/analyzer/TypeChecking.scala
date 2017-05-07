@@ -59,7 +59,7 @@ object TypeChecking extends Phase[Program, Program] {
                               else Reporter.error("Type error: this cant be Null", v); TError;
         case v:New        =>  v.tpe.getSymbol.getType
         case v:Not        =>  tcExpr(v.expr,scope, TBoolean)
-        case v:Block      =>  v.exprs.slice(0, v.exprs.length-2).map(tcExpr(_,scope));
+        case v:Block      =>  v.exprs.slice(0, v.exprs.length-1).map(tcExpr(_,scope));
                               val res:Type =  if(v.exprs.length==0) TUnit 
                                               else tcExpr(v.exprs.last,scope, expected:_*);
                               res;

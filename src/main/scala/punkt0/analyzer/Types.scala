@@ -107,7 +107,7 @@ object Types {
                                   }
       case _ => false
     }
-    override def toString = "String"
+    override def toString = name
 
   }
 

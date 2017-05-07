@@ -12,10 +12,11 @@ object CodeGeneration extends Phase[Program, Unit] {
 
   def run(prog: Program)(ctx: Context): Unit = {
 
-    val main_name= (ctx.file match {
+    /*val main_name= (ctx.file match {
       case Some(f) => f.getName().split('.').head
       case None    => "Main" 
-    })
+    })*/
+    val main_name="Main"
 
     def makeType(tp:TypeTree):String={
       tp match {
@@ -101,8 +102,8 @@ object CodeGeneration extends Phase[Program, Unit] {
         }
       }
       mt.vars map (va => generateExpr(ch, new Assign(va.id, va.expr), slotFor, methSym))
-      mt.exprs:::List(mt.retExpr) map (generateExpr(ch, _, slotFor, methSym))
-      
+      mt.exprs  map (generateExprOuter(ch, _, slotFor, methSym))
+      generateExpr(ch, mt.retExpr,slotFor,methSym); 
       mt.retType match {
         case t:BooleanType  => ch << IRETURN
         case t:IntType      => ch << IRETURN
@@ -114,6 +115,18 @@ object CodeGeneration extends Phase[Program, Unit] {
       ch.freeze
     }
 
+    def generateExprOuter(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: Symbol){
+      generateExpr(ch, expr, slotFor, methSym)
+      println("***"+expr.line);
+      println(expr.getType)
+      expr.getType match {
+        case TInt     => println("i"); ch << POP;
+        case TBoolean =>  println("b");ch << POP;
+        case TString  =>  println("s");ch << POP;
+        case x:TClass =>  println("c");ch << POP;
+        case v        =>  println("outher");{};
+      }
+    }
     def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: Symbol){
       expr match{
         case v:And        =>  generateExpr(ch, new If(v.lhs, v.rhs, Some(new False) ), slotFor, methSym);
@@ -190,7 +203,6 @@ object CodeGeneration extends Phase[Program, Unit] {
             val lEnd = ch.getFreshLabel("endlabel");
             generateExpr(ch, v.lhs, slotFor, methSym);
             generateExpr(ch, v.rhs, slotFor, methSym);
-            ch << ISUB;
             ch << If_ACmpEq(lTrue);
               ch << ICONST_0;
               ch << Goto(lEnd);
@@ -258,7 +270,13 @@ object CodeGeneration extends Phase[Program, Unit] {
         case v:Not        => //generateExpr(ch,v.expr,slotFor, methSym);
                              //ch << INEG;
                             generateExpr(ch, new If(v.expr, new False, Some(new True)),slotFor,methSym)
-        case v:Block      => v.exprs map (x => generateExpr(ch, x, slotFor, methSym));
+        case v:Block      => //v.exprs map (x => generateExprOuter(ch, x, slotFor, methSym));
+                               if(v.exprs.length <= 1)
+                                v.exprs map (x => generateExpr(ch, x, slotFor, methSym));
+                              else{
+                                v.exprs.dropRight(1) map (x => generateExprOuter(ch, x, slotFor, methSym));
+                                generateExpr(ch, v.exprs.last, slotFor,methSym); 
+                              }
         case v:If         => { 
           val afterThis = ch.getFreshLabel("afterThis")
           val afterIf   = ch.getFreshLabel("afterIf")
@@ -382,8 +400,9 @@ object CodeGeneration extends Phase[Program, Unit] {
     prog.main.vars map (va =>{
       generateExpr(mainCH, new Assign(va.id, va.expr), slotFor, prog.main.getSymbol)
     })
-    prog.main.exprs  map (generateExpr(mainCH, _, slotFor, prog.main.getSymbol))
+    prog.main.exprs  map (generateExprOuter(mainCH, _, slotFor, prog.main.getSymbol))
     mainCH << RETURN
+    mainCH.print
     mainCH.freeze
     mainClassFile.writeToFile(outDir+main_name+".class" );
 

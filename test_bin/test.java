@@ -8,8 +8,7 @@ class bar{
 
 class test{
 public static void main(String[] args){
-    int i = 10;
-    bar e= new bar();
-    System.out.println(e.p());
+    aoeu e= new aoeu();
+    System.out.println(e.print(1234));
 }
 }

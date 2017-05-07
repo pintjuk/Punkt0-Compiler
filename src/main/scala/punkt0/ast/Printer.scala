@@ -76,9 +76,16 @@ object Printer {
 
     	case v:True => var str = "true"; str;
     	case v:False => var str = "false"; str;
-    	case v:Identifier => var str = v.value +  ( if(doIds) "#" + v.symString
-                                    else "" ); str;    	
-    	case v:This => var str = "this"+  ( if(doIds) "#" + v.symString
+      case v:Identifier =>  {
+        var str =  v.value 
+        if(doIds){
+          str= str + "#" + v.symString;
+          try { str = str+ ":"+v.getType }
+          catch { case x:RuntimeException=> }
+        } 
+        str
+      }
+    	case v:This => var str = "this"+  ( if(doIds) "#" + v.symString  + ":"+v.getType
                                     else "" ) ; str;
     	case v:Null => var str = "null"; str;
     	case v:New => var str = "new " + Printer(v.tpe) + "()"; str;
