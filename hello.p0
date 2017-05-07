@@ -3,8 +3,9 @@
 // I guess everyone saw that one coming :)
 
 class aoeu {
- var foo:Int = 10;
-  def print():Int={
+ var foo:Boolean= true;
+  def print():Boolean={
+    foo=false;
     foo
   }
 }

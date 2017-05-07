@@ -19,7 +19,7 @@ object CodeGeneration extends Phase[Program, Unit] {
 
     def makeType(tp:TypeTree):String={
       tp match {
-        case t:BooleanType  => "B"
+        case t:BooleanType  => "Z"
         case t:IntType      => "I"
         case t:StringType   => "Ljava/lang/String;"
         case t:UnitType     => "V"
@@ -52,15 +52,26 @@ object CodeGeneration extends Phase[Program, Unit] {
       val classFile = new ClassFile(ct.id.value, ct.parent map (x => x.value))
       classFile.setSourceFile(ct.file.getPath)
       val dcch = classFile.addConstructor(Nil).codeHandler
+      dcch << ALOAD_0;
+      
+      val parname = ct.getSymbol.parent match{
+        case None => "java/lang/Object"
+        case Some(parSym) => parSym.name
+      }
+      dcch<< InvokeSpecial(parname, "<init>", "()V")
 
       ct.vars map (x => {
         /*TODO: call superclas constrtuctor*/
+       println(makeType(x.tpe)) 
         classFile.addField( makeType(x.tpe), x.id.value)
         def l(y:String): Int = 0;
-        generateExpr(dcch, x.expr, l , prog.main.getSymbol )
+        dcch << ALOAD_0;
+        generateExpr(dcch, x.expr, l , ct.getSymbol )
         dcch << PutField(ct.id.value, x.id.value,
                          typeToBCType(x.id.getSymbol.getType));
       });
+      dcch<< RETURN
+      dcch.freeze
       ct.methods map ( mth => 
           generateMethodCode( 
             classFile.addMethod(
@@ -70,8 +81,7 @@ object CodeGeneration extends Phase[Program, Unit] {
             ).codeHandler, 
             mth 
           ) 
-        )
-    
+        ) 
       classFile.writeToFile(dir + "/" + ct.id.value + ".class" );
     }
 
@@ -100,8 +110,6 @@ object CodeGeneration extends Phase[Program, Unit] {
         case t:UnitType     => ch << RETURN
         case t:Identifier   => ch << ARETURN
       }
-
-      ch.print
 
       ch.freeze
     }
@@ -222,6 +230,7 @@ object CodeGeneration extends Phase[Program, Unit] {
                   } else if(methsymbol.isArg(v.value)){
                     ch << ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
                   } else if(methsymbol.isField(v.value)){
+                    ch << ALOAD_0
                     ch << GetField(methsymbol.classSymbol.name, v.value,  typeToBCType(v.getSymbol.getType));
                   }
               }
@@ -295,12 +304,12 @@ object CodeGeneration extends Phase[Program, Unit] {
                 }
         }
         case v:Assign     => {
-          generateExpr(ch,v.expr ,slotFor, methSym);
           v.id.getSymbol match {
             case varSym:VariableSymbol => { 
               methSym match{
                 case methSymbol:MethodSymbol =>{
                   if(methSymbol.isLocalVar(v.id.value)){
+                    generateExpr(ch,v.expr ,slotFor, methSym);
                     onTypeDo(v.id.getSymbol.getType,
                              ()=> ch << IStore(slotFor(v.id.getSymbol.name)),
                              ()=> ch << IStore(slotFor(v.id.getSymbol.name)),
@@ -310,13 +319,15 @@ object CodeGeneration extends Phase[Program, Unit] {
                   } else if(methSymbol.isArg(v.id.value)){
                     Reporter.error("cant reasign an argument", v);
                   } else if(methSymbol.isField(v.id.value)){
-                    PutField(methSymbol.classSymbol.name, v.id.value,
-                    typeToBCType(v.id.getSymbol.getType));
+                    ch << ALOAD_0 // load this object  on the stack
+                    generateExpr(ch,v.expr ,slotFor, methSym);
+                    ch << PutField(methSymbol.classSymbol.name, v.id.value, typeToBCType(v.id.getSymbol.getType));
                   }else{
 
                   }
                 }
                 case classSym:ClassSymbol => {
+                  generateExpr(ch,v.expr ,slotFor, methSym);
                   onTypeDo(v.id.getSymbol.getType,
                              ()=> {ch << IStore(slotFor(v.id.getSymbol.name))},
                              ()=> {ch << IStore(slotFor(v.id.getSymbol.name))},
