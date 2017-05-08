@@ -3,6 +3,7 @@ package punkt0
 import java.io.File
 import scala.io.Source
 
+case class ExitCode1Exp(message: String = "program exited with code 1", cause: Throwable = None.orNull) extends Exception(message, cause) 
 object Reporter {
   var testing=false;
 
@@ -34,7 +35,7 @@ object Reporter {
     report(pos, "fatal", msg.toString)
 
     if(testing)
-      throw new RuntimeException;
+      throw new ExitCode1Exp;
     else
       sys.exit(1)
   }
@@ -47,7 +48,7 @@ object Reporter {
     err("Errors reported.")
 
     if(testing)
-      throw new RuntimeException;
+      throw new ExitCode1Exp;
     else
       sys.exit(1)
   }

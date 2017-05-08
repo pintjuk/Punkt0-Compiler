@@ -4,6 +4,11 @@ package analyzer
 import ast.Trees._
 import Symbols._
 
+trait Analysed {
+  var memberColed:Boolean = false
+  var parLinked: Boolean =false
+}
+
 object NameAnalysis extends Phase[Program, Program] {
 
   def run(prog: Program)(ctx: Context): Program = {
@@ -51,32 +56,47 @@ object NameAnalysis extends Phase[Program, Program] {
       }
 		}
 
-    def collectClassMembers(cl: ClassDecl){
-		  cl.vars.map(collectFields(_,cl.getSymbol))
-      cl.methods.map(collectMethods(_,cl.getSymbol))
+    def collectClassMembers(cl: ClassDecl):Unit={
+      if(cl.memberColed)
+        return
+      cl.parent match {
+        case None       => {}
+        case Some(par)  => (prog.classes.filter (oCl => {oCl.id.value == par.value})).map(collectClassMembers(_))
+      }
+		  cl.vars.map(collectFields(_, cl.getSymbol))
+      cl.methods.map(collectMethods(_, cl.getSymbol))
+      cl.memberColed=true
     }
 
     def linkClassParrents(cl: ClassDecl){
       cl.parent match{
         case None     => {}
-      case Some(x)  => globalScope.lookupClass(x.value,true, x).map((x) => {cl.getSymbol.parent = Some(x)});
+        case Some(x)  => globalScope.lookupClass(x.value,true, x).map((x) => {
+          cl.getSymbol.parent = Some(x)
+        });
       }
     }
     def linkMainParrents(cl: MainDecl){
       globalScope.lookupClass(cl.parent.value,true, cl.parent).map((x) => {cl.getSymbol.parent= Some(x)});
     }
 
-    def doYouLoop(cl: ClassDecl){
+    def doYouLoop(cl: ClassDecl):Boolean = {
       var chain: List[ClassSymbol] = Nil
       var current_class:Option[ClassSymbol]=Some(cl.getSymbol)
-      while(current_class match { case Some(v : Symbol) => true ; case v => false}){
-        if(chain.contains(current_class.get))
+      var break = false
+      while(current_class match  { 
+        case Some(v : Symbol) => true  
+        case None             => false
+      }){
+        if(chain.contains(current_class.get)){
           error("llegal cyclic reference involving class"+cl.id.value, cl)
-        else{
+          return true;
+        }else{
           chain :+= current_class.get;
           current_class=current_class.get.parent;
         }
       }
+      return false;
     }
   	def collectMethods(meth: MethodDecl, classScope: ClassSymbol){
       def constructSymbol: MethodSymbol = {
@@ -89,18 +109,31 @@ object NameAnalysis extends Phase[Program, Program] {
           return methSym;
       }
       classScope.lookupMethod(meth.id.value) match{
-        case None => 	constructSymbol;
-        case Some(x)    => {
+        case None =>{
+          // construct symbol anyway
+          val methSym=constructSymbol;
+          if(meth.overrides){
+            error("ovverides keyword is used, but there is no method to ovveride", meth)
+            //set it to overiding itself so that no RuntimeExceptions are not thrown by later checkeing
+            methSym.overridden=Some(methSym)
+          }
+        }
+        case Some(oMeth)    => {
           classScope.lookupVar(meth.id.value) match{
-            case Some(x) => error( " method " + meth.id.value + " overrides a variable.\n Defined fined here:" , x, " and here:",meth);
+            case Some(oVar) => error( " method " + meth.id.value + " overrides a variable.\n Defined fined here:" , oVar, " and here:",meth);
             case None   => {
               if((meth.overrides) && // overrides 
               (classScope.methods get meth.id.value match { case None => true; case Some(v) => false;}) && // and undefinid in this class
-              (x.argList.length == meth.args.length)) { // and the same number of arguments 
+              (oMeth.argList.length == meth.args.length)) { // and the same number of arguments 
                   val methSym=constructSymbol;
-                  methSym.overridden=Some(x);
-                }
-              else error( " method " + meth.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",meth)
+                  methSym.overridden=Some(oMeth);
+              }
+              else{
+                error( " method " + meth.id.value + " defined twice.\nFirst defined here:" ,oMeth, "then redefined here:",meth)
+                /// construct method symbol anyway so that checkeing can continue without throwing errors
+                val methSym=constructSymbol;
+                methSym.overridden=Some(oMeth);
+              }
             }
           }
         }
@@ -199,7 +232,9 @@ object NameAnalysis extends Phase[Program, Program] {
 
   	prog.classes.map(collectClasses(_));
     prog.classes.map(linkClassParrents(_));
-    prog.classes.map(doYouLoop(_));
+    if ( prog.classes.exists(doYouLoop(_)) ){
+      return prog
+    }
     prog.classes.map(collectClassMembers(_));
     prog.classes.map(cl => {
       cl.vars.map(checkFieldInharatanceShadowing(_,cl.getSymbol));
@@ -216,14 +251,14 @@ object NameAnalysis extends Phase[Program, Program] {
 
     def attachSymInExpr(ex:ExprTree, scope: Either[ClassSymbol, MethodSymbol]){
       ex match{
-        case exp:And        => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Or         => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Plus       => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Minus      => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Times      => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Div        => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:LessThan   => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
-        case exp:Equals     => attachSymInExpr(exp.lhs, scope);attachSymInExpr(exp.rhs, scope);
+        case exp:And        => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Or         => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Plus       => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Minus      => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Times      => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Div        => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:LessThan   => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
+        case exp:Equals     => attachSymInExpr(exp.lhs, scope); attachSymInExpr(exp.rhs, scope);
         case exp:MethodCall => attachSymInExpr(exp.obj, scope); exp.args.map( attachSymInExpr(_, scope));
 
         case exp:Identifier =>  scope match{

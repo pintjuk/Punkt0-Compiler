@@ -54,9 +54,10 @@ object TypeChecking extends Phase[Program, Program] {
         case v:False      =>  TBoolean
         case v:Identifier =>  v.getSymbol.getType
         case v:This       =>  v.getSymbol.getType
-        case v:Null       =>  if(expected.isEmpty) Types.anyRef
+        case v:Null       =>  Types.bottomRef 
+                              /*if(expected.isEmpty) Types.anyRef
                               else if(expected.exists(e => e.isInstanceOf[TClass])) expected.filter(e => e.isInstanceOf[TClass]).head
-                              else Reporter.error("Type error: this cant be Null", v); TError;
+                              else Reporter.error("Type error: this cant be Null", v); TError;*/
         case v:New        =>  v.tpe.getSymbol.getType
         case v:Not        =>  tcExpr(v.expr,scope, TBoolean)
         case v:Block      =>  v.exprs.slice(0, v.exprs.length-1).map(tcExpr(_,scope));
@@ -69,21 +70,13 @@ object TypeChecking extends Phase[Program, Program] {
                                 case None       => thnT;
                                 case Some(els)  => {
                                   val elsT = tcExpr(els, scope, expected:_*); 
-                                  thnT match{ 
-                                    case thnClass:TClass   =>{
-                                      elsT match{
-                                        case elsClass:TClass    => elsClass.lub(thnClass)
-                                        case x                  => Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
-                                                                x + " class "+thnClass + " have no bound", v.thn, "and", els);TError
-                                      }
-                                    }
-                                    case x => { 
-                                      if(thnT==elsT){
-                                        thnT
-                                      }else{
-                                        Reporter.error("Type error, branches of if stament my not be types without a common upper bond, primitive" + 
-                                          thnT + " class "+els.getType + " have no bound", v.thn, "and", els);TError
-                                      }
+                                  try{
+                                    elsT.lub(thnT)
+                                  }catch{
+                                    case primitivLubException =>{
+                                      Reporter.error("Type error, one branches of if statment my not be " + 
+                                                      thnT + " while the other is " + elsT, v.thn, "and", els)
+                                      TError
                                     }
                                   }
                                 }

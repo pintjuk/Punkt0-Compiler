@@ -26,7 +26,7 @@ class rutTestPrograms extends FlatSpec {
       var ctx = Context()
       ctx = ctx.copy(doAST = true)
       ctx = ctx.copy(file = Some( filename))
-      assertThrows[RuntimeException] {
+      assertThrows[ExitCode1Exp] {
         Main.printTokens(ctx);
       }
       Reporter.reset;
@@ -40,7 +40,7 @@ class rutTestPrograms extends FlatSpec {
       ctx = ctx.copy(doAST = true)
       ctx = ctx.copy(file = Some( filename))
       
-      assertThrows[RuntimeException] {
+      assertThrows[ExitCode1Exp] {
         val tokenIter = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
     }
   }
@@ -150,7 +150,7 @@ class rutTestPrograms extends FlatSpec {
       var ctx = Context()
       ctx = ctx.copy( doSymbolIds = true)
       ctx = ctx.copy(file = Some( filename))
-      assertThrows[RuntimeException] {
+      assertThrows[ExitCode1Exp] {
         Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
         Reporter.terminateIfErrors;
       }

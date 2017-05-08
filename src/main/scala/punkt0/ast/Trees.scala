@@ -3,13 +3,13 @@ package ast
 
 import analyzer.Symbols._
 import analyzer.Types._
-
+import analyzer.Analysed
 object Trees {
   sealed trait Tree extends Positioned
 
   case class Program(main: MainDecl, classes: List[ClassDecl]) extends Tree with Symbolic[GlobalScope] 
   case class MainDecl(obj: Identifier, parent: Identifier, vars: List[VarDecl], exprs: List[ExprTree]) extends Tree with Symbolic[ClassSymbol]
-  case class ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree with Symbolic[ClassSymbol]
+  case class ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree with Symbolic[ClassSymbol] with Analysed
   case class VarDecl(tpe: TypeTree, id: Identifier, expr: ExprTree) extends Tree with Symbolic[VariableSymbol]
   case class MethodDecl(overrides: Boolean, retType: TypeTree, id: Identifier, args: List[Formal], vars: List[VarDecl], exprs: List[ExprTree], retExpr: ExprTree) extends Tree with Symbolic[MethodSymbol] {
   }

@@ -3,6 +3,11 @@ package analyzer
 
 import Symbols._
 
+case class primitivLubException(
+  message: String = "Cant Lub of a primitive type with any other type then itself is undefined",
+  cause: Throwable = None.orNull
+  ) extends Exception(message, cause)
+
 object Types {
 
   trait Typed {
@@ -14,27 +19,32 @@ object Types {
 
   sealed abstract class Type {
     def isSubTypeOf(tpe: Type): Boolean
-    def superType():Type = this;
-    def lub(other: Type):Type = TUntyped;
+    def superType():Type = this
+    def lub(other: Type):Type
 
   }
  
-  trait lubed {
-      }
   case object TError extends Type {
     override def isSubTypeOf(tpe: Type): Boolean = true
     override def toString = "[error]"
+    override def lub(other: Type):Type = ???
   }
 
   case object TUntyped extends Type {
     override def isSubTypeOf(tpe: Type): Boolean = false
     override def toString = "[untyped]"
+    override def lub(other: Type):Type = ???
   }
 
   case object TInt extends Type {
     override def isSubTypeOf(tpe: Type): Boolean = tpe match {
       case TInt => true
       case _ => false
+
+    }
+    override def lub(other: Type):Type = other match {
+      case TInt => TInt
+      case _    => throw new primitivLubException
     }
     override def toString = "Int"
   }
@@ -43,6 +53,11 @@ object Types {
     override def isSubTypeOf(tpe: Type): Boolean = tpe match {
       case TBoolean => true
       case _ => false
+    }
+    
+    override def lub(other: Type):Type = other match {
+      case TBoolean => TBoolean
+      case _        => throw new primitivLubException
     }
     override def toString = "Boolean"
 
@@ -53,6 +68,11 @@ object Types {
       case TString => true
       case _ => false
     }
+    
+    override def lub(other: Type):Type = other match {
+      case TString => TString
+      case _      => throw new primitivLubException
+    }
     override def toString = "String"
 
   }
@@ -61,6 +81,10 @@ object Types {
     override def isSubTypeOf(tpe: Type): Boolean = tpe match {
       case TUnit => true
       case _ => false
+    }
+    override def lub(other: Type):Type = other match {
+      case TUnit  => TUnit
+      case _      => throw new primitivLubException
     }
     override def toString = "Unit"
 
@@ -71,7 +95,7 @@ object Types {
     def ==(that:Type): Boolean = {
       that match {
         case v:TClass => v.classSymbol.name == name
-        case v        => false
+        case _        => false
       }
     }
 
@@ -86,18 +110,17 @@ object Types {
     }
 
     override def lub(other: Type):Type = {
-      if(other==this)
+      if(other.isSubTypeOf(this))
         this
-      else if(other == superType)
+      else if(this.isSubTypeOf(other))
         other
-      else if(other.superType == this)
-        this
       else 
         other.superType.lub(this.superType)
     }
 
     override def isSubTypeOf(tpe: Type): Boolean = tpe match {
       case Types.anyRef => true
+      case Types.bottomRef => false
       case otherClass : TClass => if (otherClass.classSymbol.name==classSymbol.name){
                                     true
                                   }
@@ -114,8 +137,8 @@ object Types {
   case class TAnyRef(classSymbol: ClassSymbol) extends Type {
     def ==(that:Type): Boolean = {
       that match {
-        case v:TAnyRef  => true
-        case v          => false
+        case _:TAnyRef  => true
+        case _          => false
       }
     }
 
@@ -126,9 +149,36 @@ object Types {
 
     override def lub(other: Type):Type={
       other match {
-        case oth:TAnyRef => anyRef;
-        case oth:TClass  => anyRef;
-        case oth         => TUntyped;
+        case Types.anyRef     => Types.anyRef;
+        case Types.bottomRef  => Types.bottomRef;
+        case _:TClass       => anyRef;
+        case _              => throw new RuntimeException("Cant lub on non reference types");
+      }
+    }
+
+    override def toString = classSymbol.name
+  }
+  case class TBottom(classSymbol: ClassSymbol) extends Type {
+    def ==(that:Type): Boolean = {
+      that match {
+        case _:TBottom => true
+        case _          => false
+      }
+    }
+
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case Types.bottomRef  => true
+      case _:TClass         => true
+      case Types.anyRef     => true
+      case _                => false
+    }
+
+    override def lub(other: Type):Type={
+      other match {
+        case Types.anyRef    => anyRef;
+        case oth:TClass     => oth;
+        case Types.bottomRef => bottomRef;
+        case _         => throw new RuntimeException("cant lub with non reference types");
       }
     }
 
@@ -136,5 +186,6 @@ object Types {
   }
 
   // special object to implement the fact that all objects are its subclasses
-  val anyRef = TClass(new ClassSymbol("AnyRef"))
+  val anyRef = TAnyRef(new ClassSymbol("AnyRef"))
+  val bottomRef = TBottom(new ClassSymbol("bottomRef"))
 }
