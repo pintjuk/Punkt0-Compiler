@@ -1,11 +1,13 @@
 class B {
-  def lel():Boolean={
-    this == new B() && this == null
+  def lel():Unit={
+    println(this == new B());
+    println(this == null)
   }
 
   def foo(a:Int, b:B, c:Boolean): B = {new B()}
 }
 
 object Main extends App {
-  println(new B().foo(34535, null, false)== new B())
+  println(new B().foo(34535, null, false)== new B());
+  new B().lel()
 }
