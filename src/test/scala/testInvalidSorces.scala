@@ -240,7 +240,6 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/our_valid/methodCall2.p0",
     "testprograms/our_valid/thisReturning.p0",
     "testprograms/our_valid/overload1.p0",
-    "testprograms/our_valid/overload1.p0",
     "testprograms/our_valid/lazyEval.p0"
   )){
    
@@ -256,10 +255,10 @@ class rutTestPrograms extends FlatSpec {
       Process("java -cp dest Main").lines.iterator foreach { myline => 
         assert(correctLines.hasNext)
         val correctline = correctLines.next()
-        println("==================== my line:")
-        println(myline)
-        println("==================== correct line:")
-        println(correctline)
+//        println("==================== my line:")
+//        println(myline)
+//        println("==================== correct line:")
+//        println(correctline)
         if(correctLines.hasNext)
           assert(myline.replaceAll("\\s+","") === correctline.replaceAll("\\s+",""));
       }

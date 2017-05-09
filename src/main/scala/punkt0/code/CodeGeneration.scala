@@ -63,7 +63,6 @@ object CodeGeneration extends Phase[Program, Unit] {
       dcch<< InvokeSpecial(parname, "<init>", "()V")
 
       ct.vars map (x => {
-        println(makeType(x.tpe)) 
         classFile.addField( makeType(x.tpe), x.id.value)
         def l(y:String): Int = 0;
         dcch << ALOAD_0;
@@ -231,11 +230,7 @@ object CodeGeneration extends Phase[Program, Unit] {
           methSym match{
             case methsymbol:MethodSymbol => v.getSymbol match {
               case varSym:VariableSymbol => {
-                println("***************************")
-                println("var: " + v.value + ": "+ v.posString)
-                methsymbol.members foreach{case  (x, y) => println(x)}
                  if(methsymbol.isLocalVar(v.value)){
-                    println("is lockal var")
                     onTypeDo(v.getSymbol.getType,
                              ()=>ch << ILoad(slotFor(v.getSymbol.name)),
                              ()=>ch << ILoad(slotFor(v.getSymbol.name)),
@@ -243,12 +238,8 @@ object CodeGeneration extends Phase[Program, Unit] {
                              ()=>ch << ALoad(slotFor(v.getSymbol.name))
                          )
                   } else if(methsymbol.isArg(v.value)){
-                    println("is arg "+( methsymbol.params.keys.toArray.indexOf(v.value)+1))
-                    methsymbol.params foreach{case  (x, y) => println(x)}
                     ch << ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
-                    ch.print
                   } else if(methsymbol.isField(v.value)){
-                    println("is feald")
                     ch << ALOAD_0
                     ch << GetField(methsymbol.classSymbol.name, v.value,  typeToBCType(v.getSymbol.getType));
                   }
@@ -413,7 +404,6 @@ object CodeGeneration extends Phase[Program, Unit] {
     })
     prog.main.exprs  map (generateExprOuter(mainCH, _, slotFor, prog.main.getSymbol))
     mainCH << RETURN
-    mainCH.print
     mainCH.freeze
     mainClassFile.writeToFile(outDir+main_name+".class" );
 

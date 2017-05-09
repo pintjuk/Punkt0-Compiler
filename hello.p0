@@ -1,36 +1,6 @@
-
-// This is a simple implementation of '99 bottles of beer' in Punkt0.
-// I guess everyone saw that one coming :)
-class ueoa {
-  var fi:Int = 10;
-  def inc():Unit={
-    fi=fi*2
-  }
-  def lel():Int ={
-    {}
-  }
-}
-class lelster extends ueoa {
-  def print(fi:Int, input2:Int):Unit={
-    this;
-    println(fi)
-  }
-}
-
-class aoeu extends lelster {
-  override def print(fi:Int, input2:Int):Unit={
-    println("overriden")
-  }
-}
-
 object Main extends App {
-  var hej:lelster = null;
-  var other:aoeu = null;
-  this;
-  /*hej=if(true){
-    null
-  }else{
-    new aoeu()
-  }*/
-  println(null==null)
+//		null      
+    true
 }
+
+

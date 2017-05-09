@@ -72,10 +72,10 @@ object TypeChecking extends Phase[Program, Program] {
                                               else tcExpr(v.exprs.last,scope, expected:_*);
                               res;
         case v:If         =>  tcExpr(v.expr,scope, TBoolean);
-                              val thnT = tcExpr(v.thn,scope, expected:_*);
                               v.els match{
-                                case None       => thnT;
+                                case None       => tcExpr(v.thn,scope, TUnit);
                                 case Some(els)  => {
+                                  val thnT = tcExpr(v.thn, scope, expected:_*);
                                   val elsT = tcExpr(els, scope, expected:_*); 
                                   try{
                                     elsT.lub(thnT)

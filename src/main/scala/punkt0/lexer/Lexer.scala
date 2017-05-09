@@ -82,7 +82,7 @@ object Lexer extends Phase[File, Iterator[Token]] {
           case '/' => {
             source.next; 
             if(source.ch=='/') {
-              source.takeWhile(x => !(x.isWhitespace && x.isControl) ).mkString;
+              source.takeWhile(x => !(x=='\n' || x.isControl=='\r') ).mkString;
               return this.next;
             }
             else if(source.ch=='*') {

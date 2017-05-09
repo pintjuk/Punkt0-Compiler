@@ -43,7 +43,7 @@ class Vector4 {
 
 	def initialize(name: String, n1: Int, n2: Int, n3: Int, n4: Int ): String = {
 		//vect = new Arr().ofDim(4);
-		varName = name;
+//		varName = name;
 		//vect.update(0, n1);
 		//vect.update(1, n2);
 		//vect.update(2, n3);
