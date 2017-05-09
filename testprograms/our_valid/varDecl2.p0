@@ -1,0 +1,20 @@
+/* Method parameter shadows class variable */
+
+class AClass {
+	var bar: Int = 21;
+
+	def over(bar:Int): Int ={
+		println("value should be 10, is " + bar);
+		bar
+	}
+	def normal(): Int = {
+		println("value should be 21, is " + bar);
+		bar
+	}
+}
+
+object Main extends App {
+	var foo: Int = 10;
+	println("value should be 21, is " + new AClass().normal());
+	new AClass().over(foo)
+}
