@@ -1,0 +1,54 @@
+class Animal {
+	var name: String = "";
+	var color: String = "";
+
+	def setVars(nam : String, colo : String): Unit ={
+		name = nam;
+		color = colo
+	}
+
+	def printC(): Unit = {
+		println("My name is " + name + " and my color is " + color)
+	}
+
+}
+
+class Dog extends Animal{
+	var energy: Int = 100;
+	
+	def play(): Unit = {
+
+		if(0 < energy){
+			energy = energy -10;
+			println(name + " is playing")
+		}else {
+			println("too tired to play need foodzzz")
+		}
+	}
+
+	def feed(food : Int): Unit = {
+		energy = energy + food
+	}
+}
+
+class Cat extends Animal{
+	
+}
+
+object Main extends App {
+	var one: Dog = new Dog();
+	var i : Int = 13;
+
+	one.setVars("Pluto", "yellow");
+	one.printC();
+
+	while(0 < i){
+		one.play();
+		i = i - 1
+	};
+
+	one.feed(30);
+	one.play()
+
+}
+
