@@ -1,0 +1,22 @@
+/*Allowed shadowing, method variable shadows class variable
+*/
+class AClass {
+	var variable: Int = 21;
+
+	def over(): Int = {
+		var variable: Int = 100;
+		println("variable should be 100, is " + variable);
+		variable
+	}
+
+	def normal(): Int = {
+		println("variable should be 21, is " + variable);
+		variable		
+	}
+}
+
+object Main extends App {
+	println("should print 100, is printing: " + new AClass().over());
+	println("should print 21, is printing: " + new AClass().normal())
+}
+

@@ -1,0 +1,12 @@
+/*
+
+* No two variables can have the same name in the same scope, unless one of the two cases of shadowing occurs.
+
+*/
+
+object Main extends App {
+	var foo: Int;
+	var bar: String = "jk";
+	bar = bar + "kl";
+
+}

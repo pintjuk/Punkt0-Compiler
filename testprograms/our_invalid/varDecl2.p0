@@ -1,0 +1,12 @@
+/*Shadowing of method parameter by method local variable*/
+class AClass {
+	def over(bar:Int): Int ={
+		var bar: String = "Hello";
+		bar			
+	}
+}
+
+object Main extends App {
+	var foo: Int = 10;
+	new AClass().over(foo)
+}

@@ -227,7 +227,9 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/lab5/valid/ScalarProduct.p0",
     "testprograms/lab5/valid/Simple.p0",
     "testprograms/lab5/valid/Sudoku.p0",
-    "testprograms/lab5/valid/VehicleRent.p0"
+    "testprograms/lab5/valid/VehicleRent.p0",
+    "testprograms/our_valid/varDecl1.p0",
+    "testprograms/our_valid/varDecl2.p0"
   )){
    
   

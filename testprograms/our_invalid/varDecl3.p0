@@ -1,0 +1,13 @@
+/*Assignmet can only be constant of new*/
+
+class A {
+	def over(bar:Int): String ={
+		var b: String = "Hello" + bar;
+		b			
+	}
+}
+
+object Main extends App {
+	var foo: Int = 10;
+	new A().over(foo)
+}
