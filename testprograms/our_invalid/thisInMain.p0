@@ -1,8 +1,7 @@
 class B {
-  var this2:B = this;
   def foo(a:Int, b:B, c:Boolean): B = {new B()}
 }
 
 object Main extends App {
-  println(new B().foo(34535, null, false) == new B())
+  println(new B().foo(34535, null, false) == this)
 }

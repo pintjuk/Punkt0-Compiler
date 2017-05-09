@@ -271,7 +271,11 @@ object CodeGeneration extends Phase[Program, Unit] {
             }
           }
         }
-        case v:This       => ch << ArgLoad(0); // TODO: WhatHappens if this is called in main?
+        case v:This       => methSym match {
+            case methsymbol:MethodSymbol => ch << ArgLoad(0)
+            case _                       => Reporter.error("Cant use access this in main method", v)
+
+        }
         case v:Null       => ch << ACONST_NULL;
         case v:New        => ch << DefaultNew(v.tpe.value);
         case v:Not        => //generateExpr(ch,v.expr,slotFor, methSym);

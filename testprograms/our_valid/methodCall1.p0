@@ -1,0 +1,10 @@
+class foo {
+  def callme():String={"maybe"}
+}
+
+class bar extends foo {
+}
+object Main extends App{
+  var b:bar = new bar();
+  println(b.callme())
+}

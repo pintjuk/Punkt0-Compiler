@@ -1,0 +1,16 @@
+class B {
+  def lel():Unit={
+    println(this == new B());
+    println(this == null)
+  }
+
+  def foo(a:Int, b:B, c:Boolean): B = {new B()}
+}
+
+object Main extends App {
+  var lel:B = null;
+  println(new B().foo(34535, null, false)== null);
+  println(null==null);
+  println(null==new B());
+  println(lel==null)
+}
