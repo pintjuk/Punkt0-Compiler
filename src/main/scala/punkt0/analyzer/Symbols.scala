@@ -2,7 +2,7 @@ package punkt0
 package analyzer
 
 import Types._
-
+import scala.collection.immutable.ListMap
 object Symbols {
 
   trait Scope {
@@ -87,7 +87,7 @@ object Symbols {
     }
   }
   class MethodSymbol(val name: String, val classSymbol: ClassSymbol) extends Symbol with Scope{
-    var params = Map[String, VariableSymbol]()
+    var params:Map[String, VariableSymbol] = ListMap[String, VariableSymbol]()
     var members = Map[String, VariableSymbol]()
     var argList: List[VariableSymbol] = Nil
     var retType: Type= null

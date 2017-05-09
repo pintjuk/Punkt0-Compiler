@@ -117,15 +117,13 @@ object CodeGeneration extends Phase[Program, Unit] {
 
     def generateExprOuter(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: Symbol){
       generateExpr(ch, expr, slotFor, methSym)
-      println("***"+expr.line);
-      println(expr.getType)
       expr.getType match {
-        case TInt     => println("i"); ch << POP;
-        case TBoolean =>  println("b");ch << POP;
-        case TString  =>  println("s");ch << POP;
-        case x:TClass =>  println("c");ch << POP;
-        case x:TBottom =>  println("c");ch << POP;
-        case v        =>  println("outher");{};
+        case TInt     =>  ch << POP;
+        case TBoolean =>  ch << POP;
+        case TString  =>  ch << POP;
+        case x:TClass =>  ch << POP;
+        case x:TBottom =>  ch << POP;
+        case v        =>  {};
       }
     }
     def generateExpr(ch: CodeHandler,  expr: ExprTree, slotFor:(String => Int), methSym: Symbol){
@@ -233,7 +231,11 @@ object CodeGeneration extends Phase[Program, Unit] {
           methSym match{
             case methsymbol:MethodSymbol => v.getSymbol match {
               case varSym:VariableSymbol => {
+                println("***************************")
+                println("var: " + v.value + ": "+ v.posString)
+                methsymbol.members foreach{case  (x, y) => println(x)}
                  if(methsymbol.isLocalVar(v.value)){
+                    println("is lockal var")
                     onTypeDo(v.getSymbol.getType,
                              ()=>ch << ILoad(slotFor(v.getSymbol.name)),
                              ()=>ch << ILoad(slotFor(v.getSymbol.name)),
@@ -241,8 +243,12 @@ object CodeGeneration extends Phase[Program, Unit] {
                              ()=>ch << ALoad(slotFor(v.getSymbol.name))
                          )
                   } else if(methsymbol.isArg(v.value)){
+                    println("is arg "+( methsymbol.params.keys.toArray.indexOf(v.value)+1))
+                    methsymbol.params foreach{case  (x, y) => println(x)}
                     ch << ArgLoad(methsymbol.params.keys.toArray.indexOf(v.value)+1);
+                    ch.print
                   } else if(methsymbol.isField(v.value)){
+                    println("is feald")
                     ch << ALOAD_0
                     ch << GetField(methsymbol.classSymbol.name, v.value,  typeToBCType(v.getSymbol.getType));
                   }
