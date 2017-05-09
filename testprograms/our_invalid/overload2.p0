@@ -1,0 +1,24 @@
+/*In a given class, no method can have the same name as another method defined in a super class, unless overriding applies.*/
+
+class A {
+
+	def ameth(a : Int, b : Int): Int = {
+		var c: Int = 0;
+		c = a + b;
+		c
+	}
+
+}
+class B extends A{
+
+	def ameth(a : Int, b : Int): Int = {
+		var c: Int = 0;
+		c = a * b;
+		c
+	}
+
+}
+
+object Main extends App {
+	new B().ameth(10,100)
+}

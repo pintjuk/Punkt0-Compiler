@@ -235,7 +235,9 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/our_valid/Override6.p0",
     "testprograms/our_valid/Override7.p0",
     "testprograms/our_valid/methodCall1.p0",
-    "testprograms/our_valid/NullChecks.p0"
+    "testprograms/our_valid/NullChecks.p0",
+    "testprograms/our_valid/class.p0",
+    "testprograms/our_valid/overload1.p0"
   )){
    
   

@@ -1,0 +1,22 @@
+/*Extending class*/
+
+class A {
+	def ameth(hello : String): String ={
+		var world: String = "world";
+		hello + world			
+	}
+
+}
+
+class B extends A{
+	def bmeth(hello : String): String ={
+		var b: String = "Im not supposed to be printed";
+		b
+	}
+}
+
+object Main extends App {
+	var res: String = "";
+	res = new B().ameth("hello");
+	println(res)
+}

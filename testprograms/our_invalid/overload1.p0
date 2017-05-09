@@ -1,0 +1,20 @@
+/*In a given class, no two methods can have the same name.*/
+
+class A {
+
+	def ameth(hello : String): String ={
+		var world: String = "world";
+		hello + world			
+	}
+
+	def ameth(a : Int, b : Int): Int = {
+		var c: Int = 0;
+		c = a + b;
+		c
+	}
+
+}
+
+object Main extends App {
+	new A().ameth(2,1)
+}
