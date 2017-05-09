@@ -12,7 +12,6 @@ object Types {
 
   trait Typed {
     private var _tpe: Type = TUntyped
-
     def setType(tpe: Type): this.type = { _tpe = tpe; this }
     def getType: Type = _tpe
   }
@@ -21,7 +20,7 @@ object Types {
     def isSubTypeOf(tpe: Type): Boolean
     def superType():Type = this
     def lub(other: Type):Type
-
+    def primitive:Boolean =true;
   }
  
   case object TError extends Type {
@@ -91,6 +90,7 @@ object Types {
   }
 
   case class TClass (classSymbol: ClassSymbol) extends Type{
+    override def primitive:Boolean =false;
     def name = classSymbol.name
     def ==(that:Type): Boolean = {
       that match {
@@ -135,6 +135,7 @@ object Types {
   }
 
   case class TAnyRef(classSymbol: ClassSymbol) extends Type {
+    override def primitive:Boolean =false;
     def ==(that:Type): Boolean = {
       that match {
         case _:TAnyRef  => true
@@ -159,6 +160,7 @@ object Types {
     override def toString = classSymbol.name
   }
   case class TBottom(classSymbol: ClassSymbol) extends Type {
+    override def primitive:Boolean =false;
     def ==(that:Type): Boolean = {
       that match {
         case _:TBottom => true

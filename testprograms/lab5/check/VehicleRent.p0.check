@@ -1,0 +1,29 @@
+CAR ADDED: #27275, Ferrari, 2 seats
+CAR ADDED: #32113, VW, 7 seats
+TRUCK ADDED : #12879, Opel, 40t
+TRUCK ADDED : #99234, Renault, 56t
+CREATE : Client 1 (Charlie Sheen) created!
+CREATE : Client 2 (Angelina Jolie) created!
+CREATE : Client 3 (Cameron Diaz) created!
+
+----- START OF THE EXAMPLE DAY OF A RENTING AGENCY -----
+
+ RENT : Charlie Sheen just rented : #27275, Ferrari, 0km
+
+ NO RENT : Angelina Jolie can't rent #27275 (already in use)
+
+ NO RENT : Charlie Sheen has already #27275 (1 vehicle/client)
+
+ RETURN : Charlie Sheen just brought back : #27275, Ferrari, 453km
+
+ RENT : Cameron Diaz just rented : #99234, Renault, 0km
+
+ NO RENT : Cameron Diaz has already #99234 (1 vehicle/client)
+
+ RENT : Angelina Jolie just rented : #27275, Ferrari, 453km
+
+ RETURN : Cameron Diaz just brought back : #99234, Renault, 1011km
+
+ RETURN : Angelina Jolie just brought back : #27275, Ferrari, 576km
+
+------ END OF THE EXAMPLE DAY OF A RENTING AGENCY ------

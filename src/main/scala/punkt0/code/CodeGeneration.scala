@@ -43,7 +43,8 @@ object CodeGeneration extends Phase[Program, Unit] {
         case TInt     => ifun();
         case TBoolean => bfun();
         case TString  => sfun();
-        case x:TClass => cfun();
+        case _:TClass => cfun();
+        case _:TBottom => cfun();
         case x        => throw new RuntimeException ("WTF? this should not happen, something went worng in type checking, recived unvalid type");
       } 
     } 
@@ -62,8 +63,7 @@ object CodeGeneration extends Phase[Program, Unit] {
       dcch<< InvokeSpecial(parname, "<init>", "()V")
 
       ct.vars map (x => {
-        /*TODO: call superclas constrtuctor*/
-       println(makeType(x.tpe)) 
+        println(makeType(x.tpe)) 
         classFile.addField( makeType(x.tpe), x.id.value)
         def l(y:String): Int = 0;
         dcch << ALOAD_0;
@@ -124,6 +124,7 @@ object CodeGeneration extends Phase[Program, Unit] {
         case TBoolean =>  println("b");ch << POP;
         case TString  =>  println("s");ch << POP;
         case x:TClass =>  println("c");ch << POP;
+        case x:TBottom =>  println("c");ch << POP;
         case v        =>  println("outher");{};
       }
     }
@@ -198,7 +199,7 @@ object CodeGeneration extends Phase[Program, Unit] {
               ch << ICONST_1;
             ch << Label(lEnd);
           }else if ((v.lhs.getType==TString && v.rhs.getType==TString) || 
-                    (v.lhs.getType.isInstanceOf[TClass] && v.rhs.getType.isInstanceOf[TClass])) {
+                    (!v.lhs.getType.primitive && !v.rhs.getType.primitive)) {
             val lTrue = ch.getFreshLabel("truelabel");
             val lEnd = ch.getFreshLabel("endlabel");
             generateExpr(ch, v.lhs, slotFor, methSym);

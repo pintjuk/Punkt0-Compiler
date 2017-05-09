@@ -1,10 +1,13 @@
 
 // This is a simple implementation of '99 bottles of beer' in Punkt0.
 // I guess everyone saw that one coming :)
-class ueoa extends lelster {
+class ueoa {
   var fi:Int = 10;
   def inc():Unit={
     fi=fi*2
+  }
+  def lel():Int ={
+    {}
   }
 }
 class lelster extends ueoa {
@@ -21,8 +24,13 @@ class aoeu extends lelster {
 }
 
 object Main extends App {
-  var hej:ueoa = null;
-  hej=if(true) new lelster()  else new aoeu()
-  
-  //println(null==null)
+  var hej:lelster = null;
+  var other:aoeu = null;
+  this;
+  /*hej=if(true){
+    null
+  }else{
+    new aoeu()
+  }*/
+  println(null==null)
 }

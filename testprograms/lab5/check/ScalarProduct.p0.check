@@ -1,0 +1,7 @@
+New vector v1 created: [5,3,0,1]
+New vector v2 created: [0,3,4,7]
+New vector v3 created: [2,1,9,5]
+Scalar product v1.v2: 16
+Scalar product v1.v3: 18
+Scalar product v2.v3: 74
+Ok

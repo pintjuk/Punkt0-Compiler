@@ -4,9 +4,10 @@ import java.io.File
 import java.io._
 import punkt0._
 import ast._
+import code._ 
 import analyzer._
 import lexer._
-
+import sys.process._
 
 class rutTestPrograms extends FlatSpec {
   Reporter.testing=true;
@@ -158,11 +159,32 @@ class rutTestPrograms extends FlatSpec {
     }
  } 
  
- for(filename <- getListOfFiles("testprograms/lab5/valid")){
+ for(filename <- List(
+    "testprograms/lab5/valid/99bottles.p0",
+    "testprograms/lab5/valid/BinarySearch.p0",
+    "testprograms/lab5/valid/Calendar.p0",
+    "testprograms/lab5/valid/ComplexNumbers.p0",
+    "testprograms/lab5/valid/DrawStuff.p0",
+    "testprograms/lab5/valid/Factorial.p0",
+    "testprograms/lab5/valid/GCD.p0",
+    "testprograms/lab5/valid/HeapSort.p0",
+    "testprograms/lab5/valid/Life.p0",
+    "testprograms/lab5/valid/Multiplicator.p0",
+    "testprograms/lab5/valid/NewtonsMethod.p0",
+    "testprograms/lab5/valid/OptimalChange.p0",
+    "testprograms/lab5/valid/Polymorphism.p0",
+    "testprograms/lab5/valid/PrimeTest.p0",
+    "testprograms/lab5/valid/QuickSort.p0",
+    "testprograms/lab5/valid/ScalarProduct.p0",
+    "testprograms/lab5/valid/Simple.p0",
+    "testprograms/lab5/valid/Sudoku.p0",
+    "testprograms/lab5/valid/VehicleRent.p0"
+  )){
     Reporter.reset;
     filename.toString should "typecheck" in{
       var ctx = Context()
-      ctx = ctx.copy(file = Some( filename))
+      Reporter.reset;
+      ctx = ctx.copy(file = Some(new File(filename)))
       Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
       Reporter.terminateIfErrors;
       Reporter.reset;
@@ -171,6 +193,52 @@ class rutTestPrograms extends FlatSpec {
 
   }
 
+ Reporter.reset;
+ for(filename <- List(
+    "testprograms/lab5/valid/99bottles.p0",
+    "testprograms/lab5/valid/BinarySearch.p0",
+    "testprograms/lab5/valid/Calendar.p0",
+    "testprograms/lab5/valid/ComplexNumbers.p0",
+    "testprograms/lab5/valid/DrawStuff.p0",
+    "testprograms/lab5/valid/Factorial.p0",
+    "testprograms/lab5/valid/GCD.p0",
+    "testprograms/lab5/valid/HeapSort.p0",
+    "testprograms/lab5/valid/Life.p0",
+    "testprograms/lab5/valid/Multiplicator.p0",
+    "testprograms/lab5/valid/NewtonsMethod.p0",
+    "testprograms/lab5/valid/OptimalChange.p0",
+    "testprograms/lab5/valid/Polymorphism.p0",
+    "testprograms/lab5/valid/PrimeTest.p0",
+    "testprograms/lab5/valid/QuickSort.p0",
+    "testprograms/lab5/valid/ScalarProduct.p0",
+    "testprograms/lab5/valid/Simple.p0",
+    "testprograms/lab5/valid/Sudoku.p0",
+    "testprograms/lab5/valid/VehicleRent.p0"
+  )){
+   
+  
+    "ast of "+filename should "should be equal "+ filename+".check" in{
+      var ctx = Context()
+      ctx = ctx.copy(outDir = Some(new File("dest")))
+      ctx = ctx.copy(file = Some(new File(filename)))
+      Reporter.reset;
+      val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
+      NameAnalysis.andThen(TypeChecking).andThen(CodeGeneration).run(tree)(ctx);
+      val correctLines = Process("cat " + filename+".check").lines.iterator
+      Process("java -cp dest Main").lines.iterator foreach { myline => 
+        assert(correctLines.hasNext)
+        val correctline = correctLines.next()
+        println("==================== my line:")
+        println(myline)
+        println("==================== correct line:")
+        println(correctline)
+        if(correctLines.hasNext)
+          assert(myline.replaceAll("\\s+","") === correctline.replaceAll("\\s+",""));
+      }
+    }
 
 
+    Reporter.reset;
+
+  }
 }

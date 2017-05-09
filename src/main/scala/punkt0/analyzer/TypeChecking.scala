@@ -28,8 +28,7 @@ object TypeChecking extends Phase[Program, Program] {
         case v:LessThan   =>  tcExpr(v.lhs,scope, TInt); tcExpr(v.rhs,scope, TInt); TBoolean
         case v:Equals     =>  val lt = tcExpr(v.lhs,scope);
                               val rt = tcExpr(v.rhs,scope);
-                              if(lt==rt) TBoolean
-                              else if(!(lt==rt) && (!lt.isInstanceOf[TClass] || !rt.isInstanceOf[TClass]) ) { 
+                              if (!(lt==rt) && (lt.primitive || rt.primitive )) { 
                                 Reporter.error("Type error: type missmatch, not type correct to compare " + rt+" and "+ lt, expr); 
                                 TError;
                               }
