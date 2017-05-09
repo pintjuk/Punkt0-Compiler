@@ -217,7 +217,7 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/lab5/valid/Factorial.p0",
     "testprograms/lab5/valid/GCD.p0",
     "testprograms/lab5/valid/HeapSort.p0",
-   // "testprograms/lab5/valid/Life.p0",
+    "testprograms/lab5/valid/Life.p0",
     "testprograms/lab5/valid/Multiplicator.p0",
     "testprograms/lab5/valid/NewtonsMethod.p0",
     "testprograms/lab5/valid/OptimalChange.p0",
