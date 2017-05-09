@@ -1,0 +1,27 @@
+class foo {
+  def callme():String={"maybe"}
+  def testme(f1:foo, f2:foo, f3:bar):bar ={
+    new bar()
+  }
+}
+
+class bar extends foo {
+}
+
+class under extends bar {
+
+  override def testme(f1:foo, f2:foo, f3:bar):bar ={
+    println(f1==f2);
+    println(f2==f3);
+    println(f3==f1);
+    new bar()
+  }
+}
+
+
+
+object Main extends App{
+  var b:bar = new bar();
+  b.testme(b,b,b);
+  b.testme(b, new bar(), new foo())
+}

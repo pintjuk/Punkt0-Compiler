@@ -51,7 +51,13 @@ object NameAnalysis extends Phase[Program, Program] {
           cl.id.setSymbol(classSym);
           globalScope.classes += (cl.id.value -> classSym);
         }
-        case Some(x)  =>  error( " class " + cl.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",cl);
+        case Some(x)  =>{ 
+          error( " class " + cl.id.value + " defined twice.\nFirst defined here:" , x, "then redefined here:",cl)
+          var classSym = new Symbols.ClassSymbol(cl.id.value).setPos(cl);
+		      cl.setSymbol(classSym);
+          cl.id.setSymbol(classSym);
+          globalScope.classes += (cl.id.value -> classSym);
+        }
 
       }
 		}

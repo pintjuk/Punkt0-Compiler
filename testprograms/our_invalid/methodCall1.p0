@@ -6,5 +6,5 @@ class bar extends foo {
 }
 object Main extends App{
   var b:bar = new bar();
-  println(b.callme())
+  println((b==null).callme())
 }
