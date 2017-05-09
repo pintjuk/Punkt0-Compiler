@@ -38,14 +38,22 @@ object TypeChecking extends Phase[Program, Program] {
                                 case derefed:TClass => derefed.classSymbol.lookupMethod(v.meth.value) match {
                                   case None => {Reporter.error("Type error: object does not contain reference" + v.meth, v.obj); TError;}
                                   case Some(methSymbol) => {
-                                    v.args zip methSymbol.argList map {
-                                      case (arg, param) => tcExpr(arg,scope, param.getType)
-                                    }; 
-                                    v.meth.setSymbol(methSymbol);
-                                    methSymbol.retType;
+                                    if( v.args.length == methSymbol.argList.length){
+                                      v.args zip methSymbol.argList map {
+                                        case (arg, param) => tcExpr(arg,scope, param.getType)
+                                      }; 
+                                      v.meth.setSymbol(methSymbol);
+                                      methSymbol.retType;
+                                    }else{
+                                      Reporter.error("Arguments in method call must match arguments in method declaration", v)
+                                      TError
+                                    }
                                   }
                                 }
-                                case tp => Reporter.error("Type error: cant dereference "+tp, v.obj);TError 
+                                case tp => {
+                                  Reporter.error("Type error: cant dereference "+tp, v.obj)
+                                  TError
+                                }
                               }
         case v:IntLit     =>  TInt
         case v:StringLit  =>  TString

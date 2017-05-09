@@ -1,0 +1,15 @@
+class hest{
+
+}
+
+class C {
+  def foo(a:Int, b:Boolean ): Int = {3}
+}
+
+class B extends C {
+  override def foo(a:Int, b:Boolean, c:hest): Int = {4}
+}
+
+object Main extends App {
+  println(new B().foo(1,true, null))
+}
