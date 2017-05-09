@@ -146,7 +146,7 @@ class rutTestPrograms extends FlatSpec {
     }*/
   }
   Reporter.reset;
- for(filename <- getListOfFiles("testprograms/lab5/invalid")){
+  for(filename <- getListOfFiles("testprograms/lab5/invalid")){
     filename.toString should "throw  RuntimeException when typechecking " in{
       var ctx = Context()
       ctx = ctx.copy( doSymbolIds = true)
@@ -159,6 +159,20 @@ class rutTestPrograms extends FlatSpec {
     }
  } 
  
+  Reporter.reset;
+  for(filename <- getListOfFiles("testprograms/our_invalid")){
+    filename.toString should "throw  RuntimeException when typechecking " in{
+      var ctx = Context()
+      ctx = ctx.copy( doSymbolIds = true)
+      ctx = ctx.copy(file = Some( filename))
+      assertThrows[ExitCode1Exp] {
+        Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
+        Reporter.terminateIfErrors;
+      }
+      Reporter.reset;
+    }
+ }
+
  for(filename <- List(
     "testprograms/lab5/valid/99bottles.p0",
     "testprograms/lab5/valid/BinarySearch.p0",
@@ -203,7 +217,7 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/lab5/valid/Factorial.p0",
     "testprograms/lab5/valid/GCD.p0",
     "testprograms/lab5/valid/HeapSort.p0",
-    "testprograms/lab5/valid/Life.p0",
+   // "testprograms/lab5/valid/Life.p0",
     "testprograms/lab5/valid/Multiplicator.p0",
     "testprograms/lab5/valid/NewtonsMethod.p0",
     "testprograms/lab5/valid/OptimalChange.p0",
