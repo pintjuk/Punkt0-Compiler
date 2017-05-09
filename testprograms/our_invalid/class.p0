@@ -1,0 +1,16 @@
+/*Class that is being extended with must be declared*/
+
+class B extends A{
+
+	def bmeth(hello : String): String ={
+		var b: String = "Im not supposed to be printed";
+		b
+	}
+
+}
+
+object Main extends App {
+	var res: String = "";
+	res = new B().ameth("hello");
+	println(res)
+}

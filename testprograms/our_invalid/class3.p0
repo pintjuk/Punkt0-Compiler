@@ -1,0 +1,6 @@
+/*Class used as type must be declared*/
+
+object Main extends App {
+	var res: String = "";
+	res = new B()
+}

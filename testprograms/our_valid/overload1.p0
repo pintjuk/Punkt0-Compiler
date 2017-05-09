@@ -1,0 +1,27 @@
+/*Same method name, different classes and no extension*/
+
+class A {
+
+	def ameth(a : Int, b : Int): Int = {
+		var c: Int = 0;
+		c = a + b;
+		c
+	}
+
+}
+
+class B{
+
+	def ameth(a : Int, b : Int): Int = {
+		var c: Int = 0;
+		c = a * b;
+		c
+	}
+
+}
+
+object Main extends App {
+	var number: Int = 0;
+	number = new A().ameth(10,100);
+	println("number should be 110 is " + number)
+}

@@ -1,0 +1,25 @@
+/*Class names should be unique*/
+
+class A {
+
+	def ameth(hello : String): String ={
+		var world: String = "world";
+		hello + world			
+	}
+
+}
+
+class A {
+
+	def bmeth(hello : String): String ={
+		var b: String = "Im not supposed to be printed";
+		b
+	}
+
+}
+
+object Main extends App {
+	var res: String = "";
+	res = new A().ameth("hello");
+	println(res)
+}
