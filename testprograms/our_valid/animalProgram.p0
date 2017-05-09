@@ -1,0 +1,41 @@
+class Animal {
+	var name: String = "";
+	var color: String = "";
+
+	def setVars(nam : String, colo : String): Unit ={
+		name = nam;
+		color = colo
+	}
+
+	def printC(): Unit = {
+		println("My name is " + name + " and my color is " + color)
+	}
+
+}
+
+class Dog extends Animal{
+
+	def rec(number : Int): Int = {
+		
+		if(number < 10){
+			println("Number is " + number);
+			this.rec(number +1)
+		};
+
+		2
+	}
+
+}
+
+class Cat extends Animal{
+	
+}
+
+object Main extends App {
+	var one: Dog = new Dog();
+	one.setVars("Pluto", "yellow");
+	one.printC();
+	one.rec(0)
+
+}
+
