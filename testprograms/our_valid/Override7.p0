@@ -1,0 +1,19 @@
+class hest{
+  def p():String={"hest"}
+}
+
+class hest2 extends hest{
+  override def p():String ={"hest2"}
+}
+
+class C {
+  def foo(a:Int, ab:hest2 ,b:Boolean ): hest = {new hest()}
+}
+
+class B extends C {
+  override def foo(a:Int, b:hest2, c:Boolean): hest = {new hest2()}
+}
+
+object Main extends App {
+  println(new B().foo(34535, null, false).p())
+}
