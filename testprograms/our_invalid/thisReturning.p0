@@ -1,0 +1,23 @@
+class B {
+  def foo(a:Int, b:B, c:Boolean): B = {
+    println("original method");
+    new B()
+  }
+  def fi():C={
+    this
+  }
+}
+
+class C extends B {
+  override def foo (a:Int, b:B, c:Boolean):B = {
+    println("overiden method");
+    this
+  }
+}
+
+object Main extends App {
+  var b:B = new C();
+  println(new B().foo(34535, null, false) == new C().foo(34535, null, false));
+  println(b.foo(34535, null, false).foo(34535, null, false).foo(34535, null, false).foo(34535, null, false)
+  ==b.foo(34535, null, false).foo(34535, null, false).foo(34535, null, false))
+}
