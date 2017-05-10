@@ -1,3 +1,4 @@
+
 #!/bin/bash
 rm -rf testprograms/lab5/check
 mkdir testprograms/lab5/check
