@@ -240,7 +240,10 @@ class rutTestPrograms extends FlatSpec {
     "testprograms/our_valid/methodCall2.p0",
     "testprograms/our_valid/thisReturning.p0",
     "testprograms/our_valid/overload1.p0",
-    "testprograms/our_valid/lazyEval.p0"
+    "testprograms/our_valid/lazyEval.p0",
+    "testprograms/our_valid/fealdsMethods.p0",
+    "testprograms/our_valid/fealdsMethods2.p0",
+    "testprograms/our_valid/fealdsMethods3.p0"
   )){
    
   

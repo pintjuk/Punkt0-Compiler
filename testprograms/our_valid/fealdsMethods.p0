@@ -1,0 +1,20 @@
+class C {
+  var callme:String = "I am a feald in class C";
+  def callme():String = {
+    println(":method invoced");
+    "I am a method in class C"
+  }
+
+  def test():Unit={
+    println(callme);
+    println(this.callme())
+  }
+}
+
+class B extends C {
+
+}
+
+object Main extends App {
+  new B().test()
+}

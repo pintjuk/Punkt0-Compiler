@@ -125,9 +125,9 @@ object NameAnalysis extends Phase[Program, Program] {
           }
         }
         case Some(oMeth)    => {
-          classScope.lookupVar(meth.id.value) match{
-            case Some(oVar) => error( " method " + meth.id.value + " overrides a variable.\n Defined fined here:" , oVar, " and here:",meth);
-            case None   => {
+         // classScope.lookupVar(meth.id.value) match{
+           // case Some(oVar) => error( " method " + meth.id.value + " overrides a variable.\n Defined fined here:" , oVar, " and here:",meth);
+           // case None   => {
               if((meth.overrides) && // overrides 
               (classScope.methods get meth.id.value match { case None => true; case Some(v) => false;}) && // and undefinid in this class
               (oMeth.argList.length == meth.args.length)) { // and the same number of arguments 
@@ -140,8 +140,8 @@ object NameAnalysis extends Phase[Program, Program] {
                 val methSym=constructSymbol;
                 methSym.overridden=Some(oMeth);
               }
-            }
-          }
+           // }
+          //}
         }
       }
   	}
@@ -158,15 +158,15 @@ object NameAnalysis extends Phase[Program, Program] {
       if(!isConstant(v.expr))
         Reporter.error("assigment in fealds daclaration must be constant or new",v.expr)
       scope.lookupVar(v.id.value) match{
-        case None => scope.lookupMethod(v.id.value) match{
-          case None=>{
+        case None =>// scope.lookupMethod(v.id.value) match{
+        //  case None=>{
             var sym = new Symbols.VariableSymbol(v.id.value).setPos(v)
             v.setSymbol(sym)
             v.id.setSymbol(sym);
             scope.members += (v.id.value -> sym)
-          }
-          case Some(x) => error( " class feild " + v.id.value + " is shadowing a method.\nMethod defined here:" , x, "feild defined here:",v)
-        }
+        //  }
+        //  case Some(x) => error( " class feild " + v.id.value + " is shadowing a method.\nMethod defined here:" , x, "feild defined here:",v)
+        //}
         case Some(x) => error( " class feild " + v.id.value + " defined twice, or shadowing parrant feild.\nFirst defined here:" , x, "then redefined here:",v)
       }
   	}
@@ -176,11 +176,17 @@ object NameAnalysis extends Phase[Program, Program] {
         case None => {}
         case Some(parent) =>{
           parent.lookupVar(v.id.value) match{
-            case None => parent.lookupMethod(v.id.value) match{
+            case None => 
+              /*parent.lookupMethod(v.id.value) match{
               case None=>{}
-              case Some(x) => error( " class feild " + v.id.value + " is shadowing a method.\nMethod defined here:" , x, "feild defined here:",v)
-            }
-            case Some(x) => error( " class feild " + v.id.value + " defined twice, or shadowing parrant feild.\nFirst defined here:" , x, "then redefined here:",v)
+              case Some(x) => error(  " class feild " + 
+                                      v.id.value + 
+                                      " is shadowing a method.\nMethod defined here:" ,
+                                      x, "feild defined here:",v)
+            }*/
+            case Some(x) => error(" class feild " + v.id.value + 
+                                  " defined twice, or shadowing parrant feild.\nFirst defined here:" , 
+                                  x, "then redefined here:",v)
           }
         }
       }

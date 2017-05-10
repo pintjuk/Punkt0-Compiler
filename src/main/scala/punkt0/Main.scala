@@ -102,8 +102,7 @@ object Main {
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
       if(ctx.doAST){
         println(tree);
-      }
-      if(ctx.doPrintMain){
+      }else if(ctx.doPrintMain){
         println(Printer.apply(tree));
       }else{
         NameAnalysis.andThen(TypeChecking).andThen(CodeGeneration).run(tree)(ctx);
