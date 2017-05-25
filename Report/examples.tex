@@ -1,6 +1,6 @@
-Beniffits of tail recursion optimizations is the most obvious on method ecixutions that  would otherwise run out of stack space. Considder for example the following program.
+The benefits of tail recursion optimizations could be viewed clearly on method exicutions that would otherwise run out of stack space. Consider for example the following program.
 
-It recursevly incremetst i untill i overflows to 0 and returns the result.
+It recursevly increments i until i overflows to 0 and returns the result.
 \begin{lstlisting}
 class OverflowPlease {
   def makeZero( i:Int):Int = {
@@ -18,12 +18,12 @@ object Main extends App {
 
 
 \end{lstlisting}
-each recursion creates a new stack fram, so a stack that fits over 4 million frames would be requiered to execute this program. But with tailrecursion optimization we expect this program to Sucessfully overflow i to 0 only using a couple of stack frams.
+Each recursion creates a new stack frame, so a stack that fits over 4 million frames would be requiered to execute this program. But with tailrecursion optimization we expect this program to sucessfully overflow i to 0 only using a couple of stack frames.
 
-This should also make the programs that do not run out of stack space faster since poping and pushing stack frames is a relatively slow procidure.
+This should also make the programs that do not run out of stack space faster since poping and pushing stack frames is a relatively slow procedure.
 
 
-here is a similar example from the lab descrption that recursively get the last element of a linked list
+Here is a similar example from the lab description that recursively get the last element of a linked list:
 
 \begin{lstlisting}
 class Helper {
@@ -39,11 +39,9 @@ class Helper {
 
 \subsection{Recursion on trees}
 
-Recursion on tree structures is interesting because in binary tries we need to recurse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then non, especially if the tree tends to be unbalanced.
+Recursion on tree structures is interesting because in binary trees we need to recurse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then none, especially if the tree tends to be unbalanced.
 
-this example has a function that tail recursively sums the contents of the tree.
-
-and enother one that sets all the contents of the tree to 0.
+This example has a function that tail recursively sums the contents of the tree and another one that sets all the contents of the tree to 0.
 
 \begin{lstlisting}
 class TreeHelper {
@@ -78,7 +76,7 @@ class TreeHelper {
 \subsection{corecursive tail calls}
 \label{sec:corecursionexample}
 
-Here is toy example of the more general problem that we do not inted to handle. Here two methods \texttt{isEven(Int)} and \texttt{isOdd(Int)} use tail calls to each other to determin if the input method is odd or even.
+Here is an example of the more general problem that we do not initially inted to handle. Two methods \texttt{isEven(Int)} and \texttt{isOdd(Int)} use tail calls to each other to determin if the input method is odd or even.
 
 \begin{lstlisting}
 class numbers {
