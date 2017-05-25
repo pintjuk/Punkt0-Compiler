@@ -1,4 +1,4 @@
-The benefits of tail recursion optimizations could be viewed clearly on method exicutions that would otherwise run out of stack space. Consider for example the following program.
+The benefits of tail recursion optimizations is evedent on  method exicutions that would otherwise run out of stack space. Consider for example the following program.
 
 It recursevly increments i until i overflows to 0 and returns the result.
 \begin{lstlisting}
@@ -18,9 +18,10 @@ object Main extends App {
 
 
 \end{lstlisting}
+
 Each recursion creates a new stack frame, so a stack that fits over 4 million frames would be requiered to execute this program. But with tailrecursion optimization we expect this program to sucessfully overflow i to 0 only using a couple of stack frames.
 
-This should also make the programs that do not run out of stack space faster since poping and pushing stack frames is a relatively slow procedure.
+Pushing and poping stack frames is verry slow, for examlpe compared to addition. So even if we had enough stack space for 4 million frames, we would like to avoid having to push 4 million stack frams if we could avoid it. So performance is also a major bonifit of tail recursion optimization.
 
 
 Here is a similar example from the lab description that recursively get the last element of a linked list:
