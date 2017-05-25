@@ -1,15 +1,15 @@
-We will first give a general overview of the apreach we inted to use, for more details see Section ref{sec:details}
+We will first give a general overview of the approach we intend to use, for more details see Section ref{sec:details}
 
-We inted to implement tail recursion elemination as mentioned by introducing a new stage, after type checking, that transforms the AST. Changing tail recursive functions into functions with while loops.
+We intend to implement tail recursion elimination as mentioned by introducing a new stage, after type checking, that transforms the AST. Changing tail recursive functions into functions with while loops.
 
-such a transformatio would have to perform the following steps
+such a transformation would have to perform the following steps
 
 \begin{enumerate}
     \item Detect tail recursive functions, and for each:
     \item Introduce variables to hold arguments, and a special status variable for the main loop to loop on
     \item Encase the method body in a while loop that loops on the status variable
-    \item Add variable initializiton in the begining of the body of the while loop.
-    \item Rewrite all expresions in the while loop body to use the argument variables we introduced insted of argumets 
+    \item Add variable initialization in the beginning of the body of the while loop.
+    \item Rewrite all expressions in the while loop body to use the argument variables we introduced instead of acutes 
     \item Rewrite the last expresion of the while loop removing recursive tail calls replacing them with assigments to the argument variables we introduced and seting the status flag to loop
     \item on all branches of the last expresion that did not invoce a recursive call, add a assigment to the status variable to exit the loop.
 \end{enumerate}

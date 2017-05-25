@@ -1,6 +1,6 @@
-The benefits of tail recursion optimizations is evedent on  method exicutions that would otherwise run out of stack space. Consider for example the following program.
+The benefits of tail recursion optimization is evident on  method execution that would otherwise run out of stack space. Consider for example the following program.
 
-It recursevly increments i until i overflows to 0 and returns the result.
+It recursively increments i until i overflows to 0 and returns the result.
 \begin{lstlisting}
 class OverflowPlease {
   def makeZero( i:Int):Int = {
@@ -19,9 +19,9 @@ object Main extends App {
 
 \end{lstlisting}
 
-Each recursion creates a new stack frame, so a stack that fits over 4 million frames would be requiered to execute this program. But with tailrecursion optimization we expect this program to sucessfully overflow i to 0 only using a couple of stack frames.
+Each recursion creates a new stack frame, so a stack that fits over 4 million frames would be required to execute this program. But with tail recursion optimization we expect this program to successfully overflow i to 0 only using a couple of stack frames.
 
-Pushing and poping stack frames is verry slow, for examlpe compared to addition. So even if we had enough stack space for 4 million frames, we would like to avoid having to push 4 million stack frams if we could avoid it. So performance is also a major bonifit of tail recursion optimization.
+Pushing and popping stack frames is very slow, for example compared to addition. So even if we had enough stack space for 4 million frames, we would like to avoid having to push 4 million stack frames if we could avoid it. So performance is also a major benefit of tail recursion optimization.
 
 
 Here is a similar example from the lab description that recursively get the last element of a linked list:
@@ -40,7 +40,7 @@ class Helper {
 
 \subsection{Recursion on trees}
 
-Recursion on tree structures is interesting because in binary trees we need to recurse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then none, especially if the tree tends to be unbalanced.
+Recursion on tree structures is interesting because in binary trees we need to recourse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then none, especially if the tree tends to be unbalanced.
 
 This example has a function that tail recursively sums the contents of the tree and another one that sets all the contents of the tree to 0.
 
@@ -74,7 +74,7 @@ class TreeHelper {
 }
 \end{lstlisting}
 
-\subsection{corecursive tail calls}
+\subsection{Co-recursive tail calls}
 \label{sec:corecursionexample}
 
 Here is an example of a more general problem that we do not initially intend to handle. Two methods \texttt{isEven(Int)} and \texttt{isOdd(Int)} use tail calls to each other to determine if the input method is odd or even.
@@ -94,3 +94,24 @@ class numbers {
 }
 \end{lstlisting}
 
+
+\subsection{tail recursion in a while expression}
+
+We do not intend to handle tail recursion in while expressions.
+
+In principle the following program is tail recursive:
+
+
+\begin{lstlisting}
+class foo {
+  def bar(): Int = {
+    while (SomeCond) {
+      this.bar()
+    } 
+  }
+}
+
+\end{lstlisting}
+However, In order to perform the tail call elimination we need to know how many times the body of the while loop is going to be executed, witch is runtime information. So we simply cant handle this case. This case would have to be handled in the runtime environment where such information is available.
+
+Besides this seams like a somewhat silly and uncommon case of tail recursion.
