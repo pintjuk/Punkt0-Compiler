@@ -1,32 +1,30 @@
-We will first give a general overview of the approach we intend to use, for more details see Section ref{sec:details}
+We will first give a general overview of the aproach we intend to use, for more details see section ref{sec:details}
 
-We intend to implement tail recursion elimination as mentioned by introducing a new stage, after type checking, that transforms the AST. Changing tail recursive functions into functions with while loops.
+We intend to implement tail recursion elemination, as earlier mentioned, this will be done by introducing a new stage, after type checking, that transforms the AST. Changing tail recursive functions into functions with while loops.
 
-such a transformation would have to perform the following steps
+Such a transformation would have to perform the following steps:
 
 \begin{enumerate}
     \item Detect tail recursive functions, and for each:
-    \item Introduce variables to hold arguments, and a special status variable for the main loop to loop on
-    \item Encase the method body in a while loop that loops on the status variable
-    \item Add variable initialization in the beginning of the body of the while loop.
-    \item Rewrite all expressions in the while loop body to use the argument variables we introduced instead of acutes 
-    \item Rewrite the last expresion of the while loop removing recursive tail calls replacing them with assigments to the argument variables we introduced and seting the status flag to loop
-    \item on all branches of the last expresion that did not invoce a recursive call, add a assigment to the status variable to exit the loop.
+    \item Introduce variables to hold arguments, and a special status variable for the main loop to loop on.
+    \item Encase the method body in a while loop that loops on the status variable.
+    \item Add variable initializiton in the beginning of the body of the while loop.
+    \item Rewrite all expressions in the while loop body to use the argument variables we introduced instead of argumets. 
+    \item Rewrite the last expression of the while loop, removing recursive tail calls and replacing them with assigments to the argument variables we introduced and setting the status flag to loop.
+    \item On all branches of the last expression that did not invoke a recursive call, add a assigment to the status variable to exit the loop.
 \end{enumerate}
 
 
 
 
 \subsection{Terminalogy and Background}
-An instrcution in "in the tail possition" means that it is the last thing to be executed before the method exits.
+An instruction in "the tail position" means that it is the last thing to be executed before the method exits.
 
-A tail-recursion is a method with a call to itself in the tail position
+A tail-recursion is a method with a call to itself in the tail position.
 
-By tail call co-recursion we mean 2 or more methods that have calls to each other in the tail possition.
+By tail call co-recursion we mean 2 or more methods that have calls to each other in the tail position.
 
-
-By AST-transform, we mean a function that takes an AST ard rewrites it into an other AST. In our case we want our AST transformations to perserve the effect of executing the AST.
-
+By AST-transform, we mean a function that takes an AST and rewrites it into an other AST. In our case we want our AST transformation to perserve the effect of executing the AST.
 
 \subsection{Implementation Details}
 \label{sec:details}
