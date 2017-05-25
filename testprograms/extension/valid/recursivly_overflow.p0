@@ -1,0 +1,14 @@
+class OverflowPlease {
+  def makeZero( i:Int):Int = {
+    if (i==0){
+      i
+    }else{
+      this.makeZero(i+1)
+    }
+  }
+}
+
+object Main extends App {
+  println(4294967295);
+  println(new OverflowPlease().makeZero(4294967295))
+}

@@ -1,0 +1,9 @@
+class list{
+  def head():Int = {0}
+  def tail():list = {null}
+}
+
+object Main extends App {
+  println(4294967295);
+  println(new OverflowPlease().makeZero(4294967295))
+}
