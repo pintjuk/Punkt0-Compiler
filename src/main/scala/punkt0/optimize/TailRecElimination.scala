@@ -4,6 +4,7 @@ package optimize
 import ast.Trees._
 import analyzer._
 import analyzer.Symbols._
+import analyzer.Types._
 
 
 object TailRecElimination extends Phase[Program, Program] {
@@ -47,24 +48,24 @@ object TailRecElimination extends Phase[Program, Program] {
     //Step 2: Start rewriting
     var arg_to_sym_symbols = Map[VariableSymbol, VariableSymbol]()
     def change_expresion(in:ExprTree):ExprTree = in match {
-        case v:And        =>  new And(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType)
-        case v:Or         =>  new Or(change_expresion(v.lhs), change_expresion(v.rhs))
-        case v:Plus       =>  new Plus(change_expresion(v.lhs), change_expresion(v.rhs)) 
-        case v:Minus      =>  new Minus(change_expresion(v.lhs), change_expresion(v.rhs))
-        case v:Times      =>  new Times(change_expresion(v.lhs), change_expresion(v.rhs))
-        case v:Div        =>  new Div(change_expresion(v.lhs), change_expresion(v.rhs))
-        case v:LessThan   =>  new LessThan(change_expresion(v.lhs), change_expresion(v.rhs)) 
-        case v:Equals     =>  new Equals(change_expresion(v.lhs), change_expresion(v.rhs))
-        case v:MethodCall =>  v 
+        case v:And        =>  new And(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Or         =>  new Or(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Plus       =>  new Plus(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Minus      =>  new Minus(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Times      =>  new Times(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Div        =>  new Div(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:LessThan   =>  new LessThan(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:Equals     =>  new Equals(change_expresion(v.lhs), change_expresion(v.rhs)).setType(v.getType).setPos(v)
+        case v:MethodCall =>  v
         case v:IntLit     =>  v
         case v:StringLit  =>  v 
-        case v:True       =>  v  
-        case v:False      =>  v 
-        case v:Identifier =>{ 
+        case v:True       =>  v 
+        case v:False      =>  v
+        case v:Identifier =>{
             v.getSymbol match {
                 case sym:VariableSymbol => (arg_to_sym_symbols get sym) match {
                      case None   => v
-                     case Some(x)=> new Identifier(x.name).setSymbol(x)
+                     case Some(x)=> new Identifier(x.name).setSymbol(x).setType(v.getType).setPos(v)
                 }                              
                 case _ => v
             }
@@ -72,53 +73,43 @@ object TailRecElimination extends Phase[Program, Program] {
         case v:This       =>  v
         case v:Null       =>  v
         case v:New        =>  v        
-        case v:Not        =>  new Not(change_expresion(v.expr))
-        case v:Block      =>  new Block( v.exprs map ( x=> change_expresion(x)))
-        case v:If         =>  new If(change_expresion(v.expr), change_expresion(v.thn), v.els map (x=> change_expresion(x)))
-        case v:While      =>  new While( change_expresion(v.cond), change_expresion(v.body))
-        case v:Println    =>  new Println(change_expresion(v.expr))
-        case v:Assign     =>  new Assign(v.id, change_expresion(v.expr)) 
+        case v:Not        =>  new Not(change_expresion(v.expr)).setType(v.getType).setPos(v)
+        case v:Block      =>  new Block( v.exprs map ( x=> change_expresion(x))).setType(v.getType).setPos(v)
+        case v:If         =>  new If(change_expresion(v.expr), change_expresion(v.thn), v.els map (x=> change_expresion(x))).setType(v.getType).setPos(v)
+        case v:While      =>  new While( change_expresion(v.cond), change_expresion(v.body)).setType(v.getType).setPos(v)
+        case v:Println    =>  new Println(change_expresion(v.expr)).setType(v.getType).setPos(v)
+        case v:Assign     =>  new Assign(v.id, change_expresion(v.expr)).setType(v.getType).setPos(v)
     }
     def change_retExpr(in:ExprTree):ExprTree =  {
         change_expresion(in)
     }
 
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    println("###################################################")
-    new Program(prog.main,  
+new Program(prog.main,  
         prog.classes.map( cls => {
          new ClassDecl(cls.id, cls.parent, cls.vars, cls.methods.map( mth => {
             // introduce variables
             var arg_to_sym = Map[String, String]()
             new MethodDecl(mth.overrides, mth.retType, mth.id, mth.args, 
                 (mth.vars:::(mth.args map ( ar => {
-                    val ourSym = new Symbols.VariableSymbol("_"+ar.id.value)
-                    val ourVar = new VarDecl(ar.tpe, new Identifier("_"+ar.id.value), new Identifier(ar.id.value).setSymbol(ar.getSymbol) ).setSymbol(ourSym)
+                    val ourSym = new Symbols.VariableSymbol("_"+ar.id.value).setType(ar.tpe.getType)
+                    val ourVar = new VarDecl(ar.tpe, new Identifier("_"+ar.id.value).setSymbol(ourSym).setType(ar.tpe.getType)
+                        , new Identifier(ar.id.value).setSymbol(ar.getSymbol) ).setSymbol(ourSym)
                     arg_to_sym += (  ar.id.value -> ("_" + ar.id.value + ourSym.id))
                     arg_to_sym_symbols += (  ar.getSymbol -> ourSym)
                     mth.getSymbol.members+=(arg_to_sym(ar.id.value) -> ourSym)
                     ourVar
                 }))):+ 
                 { 
-                    val ourSym = new Symbols.VariableSymbol("_LOOP")
-                    val ourVar = new VarDecl(new BooleanType(), new Identifier( "_LOOP"), new False() ).setSymbol(ourSym)
+                    val ourSym = new Symbols.VariableSymbol("_LOOP").setType(TBoolean)
+                    val ourVar = new VarDecl(new BooleanType(), new Identifier( "_LOOP").setSymbol(ourSym).setType(TBoolean) , new False() ).setSymbol(ourSym)
                     arg_to_sym += (  "_LOOP" -> "_LOOP")
                     mth.getSymbol.members+=("_LOOP"-> ourSym)
                     ourVar
                 }, Nil,
-                new Block((List( /*TODO: initilize variables, and _LOOP*/):::(mth.exprs map (x=>change_expresion(x)))):+ change_retExpr(mth.retExpr))
-            )
-         })).setSymbol(cls.getSymbol)
-    })).setSymbol(prog.getSymbol) 
+              new Block((List( /*TODO: initilize variables, and _LOOP*/):::(mth.exprs map (x=>change_expresion(x)))):+ change_retExpr(mth.retExpr)).setPos(mth).setType(mth.retExpr.getType)
+            ).setSymbol(mth.getSymbol).setPos(mth)
+         })).setSymbol(cls.getSymbol).setPos(cls)
+    })).setSymbol(prog.getSymbol).setPos(prog) 
   }
 
 }
