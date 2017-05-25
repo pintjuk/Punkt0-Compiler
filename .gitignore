@@ -5,3 +5,7 @@ target/
 *.swp
 *.swo
 *.class
+*.aux
+*.dvi
+*.log
+*.pdf
