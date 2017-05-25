@@ -5,6 +5,7 @@ import java.io._
 import punkt0._
 import ast._
 import code._ 
+import optimize._
 import analyzer._
 import lexer._
 import sys.process._
@@ -253,7 +254,10 @@ class rutTestPrograms extends FlatSpec {
       ctx = ctx.copy(file = Some(new File(filename)))
       Reporter.reset;
       val tree = Lexer.andThen(Parser).run(ctx.file.get)(ctx);
-      NameAnalysis.andThen(TypeChecking).andThen(CodeGeneration).run(tree)(ctx);
+      NameAnalysis.andThen(TypeChecking)
+          .andThen(TailRecElimination)
+          .andThen(CodeGeneration).run(tree)(ctx);
+
       val correctLines = Process("cat " + filename+".check").lines.iterator
       Process("java -cp dest Main").lines.iterator foreach { myline => 
         assert(correctLines.hasNext)

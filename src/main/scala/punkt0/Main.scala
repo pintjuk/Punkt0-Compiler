@@ -6,6 +6,7 @@ import lexer._
 import ast._
 import analyzer._
 import code._
+import optimize._
 
 object Main {
 
@@ -105,7 +106,10 @@ object Main {
       }else if(ctx.doPrintMain){
         println(Printer.apply(tree));
       }else{
-        NameAnalysis.andThen(TypeChecking).andThen(CodeGeneration).run(tree)(ctx);
+        NameAnalysis
+            .andThen(TypeChecking)
+            .andThen(TailRecElimination)
+            .andThen(CodeGeneration).run(tree)(ctx);
       }
     }
   }
