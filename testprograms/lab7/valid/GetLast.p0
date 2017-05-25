@@ -1,0 +1,55 @@
+
+class Arr {
+  def ofDim(i: Int): Arr = { if (0 == i) new Empty() else new Cons().init(0, this.ofDim(i-1)) }
+  def update(index: Int, newval: Int): Unit = {{}}
+  def apply(index: Int): Int = {0}
+  def size(): Int = {0}
+} 
+class Empty extends Arr {}
+class Cons extends Arr {
+  var value: Int = 0;
+  var next: Arr = new Empty();
+  def init(x: Int, ne: Arr): Cons = { value = x; next = ne; this }
+  override def update(index: Int, newval: Int): Unit = { if (0 == index) value = newval else next.update(index - 1, newval) }
+  override def apply(index: Int): Int = { if (0 == index) value else next.apply(index - 1) }
+  override def size(): Int = { 1 + next.size() }
+} // End of Arr implementation
+
+class Recursion {
+
+    def Start(size : Int) : Int = {
+        var continue : Boolean = true;
+        var index : Int = 0;
+
+    		var number : Arr = null;
+    		number = new Arr().ofDim(size) ;
+
+        while(continue){
+        		number.update(index, (index*2+7)/3);
+        		index = index +1;
+        		if(index == size){
+           		println("Last added " + ((index-1)*2+7)/3);
+        			continue = false
+        		}
+        };
+
+
+        this.getLast(number, 0)
+    }
+
+    def getLast(number : Arr, index : Int) : Int = {
+    		var i : Int = 0;
+    		i = index;
+    		if(i < number.size()){
+    			i = i + 1;
+    			this.getLast(number, i)
+    		}else{
+    			number.apply(i-1)
+    		}
+    }
+}
+
+object Main extends App {
+    println("Last is: " + new Recursion().Start(10))
+
+}
