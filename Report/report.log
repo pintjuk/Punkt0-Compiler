@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=latex 2017.4.26)  25 MAY 2017 12:01
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=latex 2017.4.26)  25 MAY 2017 12:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -171,25 +171,25 @@ LaTeX Font Warning: Font shape `OMS/cmss/m/n' undefined
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 18.
-(./introduction.tex) (./examples.tex [1
-
-
-]) (./implementation.tex
+(./introduction.tex) (./examples.tex
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 3.
-)
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 40.
+ [1
+
+
+]) (./implementation.tex)
 (./extensions.tex) (./report.bbl) [2] (./report.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 2720 strings out of 493014
- 35284 string characters out of 6133354
- 114426 words of memory out of 5000000
- 6282 multiletter control sequences out of 15000+600000
- 11344 words of font info for 31 fonts, out of 8000000 for 9000
+ 2730 strings out of 493014
+ 35407 string characters out of 6133354
+ 119436 words of memory out of 5000000
+ 6290 multiletter control sequences out of 15000+600000
+ 11966 words of font info for 34 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 31i,5n,40p,343b,1558s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 31i,5n,40p,411b,1556s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on report.dvi (2 pages, 9256 bytes).
+Output written on report.dvi (2 pages, 10724 bytes).

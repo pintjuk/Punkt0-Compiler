@@ -37,11 +37,14 @@ class Helper {
 }
 \end{lstlisting}
 
+\subsection{Recursion on trees}
+
 Recursion on tree structures is interesting because in binary tries we need to recurse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then non, especially if the tree tends to be unbalanced.
 
 this example has a function that tail recursively sums the contents of the tree.
 
 and enother one that sets all the contents of the tree to 0.
+
 \begin{lstlisting}
 class TreeHelper {
   def countNodes(a: Tree, acc: Int): List = {
@@ -70,9 +73,25 @@ class TreeHelper {
     }
   }
 }
-
-\subsection co-recursive fuctions
-
-Here is toy example of a tail calls that we do not inted to optimize
-
 \end{lstlisting}
+
+\subsection{corecursive tail calls}
+\label{sec:corecursionexample}
+
+Here is toy example of the more general problem that we do not inted to handle. Here two methods \texttt{isEven(Int)} and \texttt{isOdd(Int)} use tail calls to each other to determin if the input method is odd or even.
+
+\begin{lstlisting}
+class numbers {
+  def isEven(i:Int):Boolean = {
+    if(i==0) True
+    else     isOdd(i-1)
+  }
+  
+  def isOdd(i:Int):Boolean = {
+    if(i==1) True
+    else     isEven(i-1)
+  }
+  
+}
+\end{lstlisting}
+
