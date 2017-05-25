@@ -1,22 +1,78 @@
-Give code examples where your extension is useful, and describe how they work
-with it. Make sure you include examples where the most intricate features of
-your extension are used, so that we have an immediate understanding of what the
-challenges are.
+Beniffits of tail recursion optimizations is the most obvious on method ecixutions that  would otherwise run out of stack space. Considder for example the following program.
 
-You can pretty-print Punkt0 code like this:
+It recursevly incremetst i untill i overflows to 0 and returns the result.
 \begin{lstlisting}
-object {
-  def main(): Unit = { println(new A().foo(-41)) }
+class OverflowPlease {
+  def makeZero( i:Int):Int = {
+    if (i==0){
+      i
+    }else{
+      this.makeZero(i+1)
+    }
+  }
 }
 
-class A {
-  def foo(i: Int): Int = {
-    var j: Int = 0;
-    if (i < 0) { j = 0 - i } else { j = i }
-    j + 1
+object Main extends App {
+  println(new OverflowPlease().makeZero(0))
+}
+
+
+\end{lstlisting}
+each recursion creates a new stack fram, so a stack that fits over 4 million frames would be requiered to execute this program. But with tailrecursion optimization we expect this program to Sucessfully overflow i to 0 only using a couple of stack frams.
+
+This should also make the programs that do not run out of stack space faster since poping and pushing stack frames is a relatively slow procidure.
+
+
+here is a similar example from the lab descrption that recursively get the last element of a linked list
+
+\begin{lstlisting}
+class Helper {
+  def last(a: List): List = {
+    if (a.hasNext()) {
+      this.last(a.next())
+    } else {
+      a
+    }
   }
 }
 \end{lstlisting}
 
-This section should convince us that you understand how your extension can be
-useful and that you thought about the corner cases.
+Recursion on tree structures is interesting because in binary tries we need to recurse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then non, especially if the tree tends to be unbalanced.
+
+this example has a function that tail recursively sums the contents of the tree.
+
+and enother one that sets all the contents of the tree to 0.
+\begin{lstlisting}
+class TreeHelper {
+  def countNodes(a: Tree, acc: Int): List = {
+    val r:Tree = NULL;
+    val l:Tree = NULL;
+    val sum:Int = acc;
+    if(a==NULL){
+        sum
+    }else{
+      r=a.getRight();
+      l=a.getLeft();
+      sum = this.countNodes(r, acc) + sum + 1;
+      this.countNodes(l, sum)
+    }
+  }
+  
+  def cleanseTree(a: Tree): List = {
+    val r:Tree = NULL;
+    val l:Tree = NULL;
+    if(!(a==NULL)){
+      a.setValue(0);
+      r=a.getRight();
+      l=a.getLeft();
+      this.cleanseTree(r);
+      this.cleanseTree(l)
+    }
+  }
+}
+
+\subsection co-recursive fuctions
+
+Here is toy example of a tail calls that we do not inted to optimize
+
+\end{lstlisting}

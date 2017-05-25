@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=latex 2017.4.26)  25 MAY 2017 10:28
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=latex 2017.4.26)  25 MAY 2017 12:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -171,34 +171,25 @@ LaTeX Font Warning: Font shape `OMS/cmss/m/n' undefined
 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 18.
-(./introduction.tex) (./examples.tex
-LaTeX Font Info:    Try loading font information for OML+cmss on input line 15.
-
-LaTeX Font Info:    No file OMLcmss.fd. on input line 15.
+(./introduction.tex) (./examples.tex [1
 
 
-LaTeX Font Warning: Font shape `OML/cmss/m/n' undefined
-(Font)              using `OML/cmm/m/it' instead
-(Font)              for symbol `textless' on input line 15.
-
-) (./implementation.tex
+]) (./implementation.tex
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 3.
-) (./extensions.tex) (./report.bbl) [1
-
-
-] (./report.aux)
+)
+(./extensions.tex) (./report.bbl) [2] (./report.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 2712 strings out of 493014
- 35182 string characters out of 6133354
- 106426 words of memory out of 5000000
- 6271 multiletter control sequences out of 15000+600000
- 11798 words of font info for 33 fonts, out of 8000000 for 9000
+ 2720 strings out of 493014
+ 35284 string characters out of 6133354
+ 114426 words of memory out of 5000000
+ 6282 multiletter control sequences out of 15000+600000
+ 11344 words of font info for 31 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 31i,4n,40p,219b,1187s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 31i,5n,40p,343b,1558s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on report.dvi (1 page, 4948 bytes).
+Output written on report.dvi (2 pages, 9256 bytes).

@@ -1,5 +1,5 @@
-Briefly say what problem you want to solve with your extension.
+We chose to the Tail-call optimization lab. However general Tail-call elemination would be a coxplex task In JVM so we inted to start out by only implementing the sub problem of Tail-recursion optimization.
 
-This section should convince us that you have a clear picture of the
-general architecture of your compiler and that you understand how your
-extension fits in it.
+This allows us to focus solv the problem without any changes to the existing compiler stages. We belive that all we need to do is to Introduce a new compiler stage for AST rewriting, and implement tail recursion elimination as an AST transformation from from a tail recursive method to a method with a whail loop.
+
+This stage will have to be executed after the Type checking faze, as having the method symbols atached for on method call expressions would be helpfull.
