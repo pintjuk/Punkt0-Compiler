@@ -1,4 +1,4 @@
-The benefits of tail recursion optimization is evident on  method execution that would otherwise run out of stack space. Consider for example the following program.
+The benefits of tail recursion optimization are evident on  method execution that would otherwise run out of stack space. Consider for example the following program.
 
 It recursively increments i until i overflows to 0 and returns the result.
 \begin{lstlisting}
@@ -112,6 +112,6 @@ class foo {
 }
 
 \end{lstlisting}
-However, In order to perform the tail call elimination we need to know how many times the body of the while loop is going to be executed, witch is runtime information. So we simply cant handle this case. This case would have to be handled in the runtime environment where such information is available.
+However, In order to perform the tail call elimination we need to know how many times the body of the while loop is going to be executed, which is runtime information. So we simply cant handle this case. This case would have to be handled in the runtime environment where such information is available.
 
 Besides this seams like a somewhat silly and uncommon case of tail recursion.
