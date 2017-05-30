@@ -301,7 +301,7 @@ object CodeGeneration extends Phase[Program, Unit] {
           generateExpr(ch, v.cond , slotFor, methSym);
           ch << ICONST_0
           ch << If_ICmpEq(afterWhileBody)
-          generateExpr(ch,v.body ,slotFor, methSym);
+          generateExprOuter(ch,v.body ,slotFor, methSym);
           ch << Goto (beforeWhile)
           ch << Label (afterWhileBody)
         }

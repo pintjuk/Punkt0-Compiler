@@ -7,6 +7,7 @@ case class Context(
   outDir: Option[File] = None,
   doEval: Boolean = false,
   doHelp: Boolean = false,
+  doTailRec: Boolean = false,
   doPrintMain: Boolean = false,
   doTokens: Boolean = false,
   doAST: Boolean = false,

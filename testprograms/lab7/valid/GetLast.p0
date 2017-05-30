@@ -22,13 +22,13 @@ class Recursion {
         var index : Int = 0;
 
     		var number : Arr = null;
-    		number = new Arr().ofDim(size) ;
+    		number = new Arr().ofDim(2) ;
 
         while(continue){
-        		number.update(index, (index*2+7)/3);
+                number = new Cons().init((index*2+7)/3, number);
         		index = index +1;
         		if(index == size){
-           		println("Last added " + ((index-1)*2+7)/3);
+           		    println("Last added " + ((index-1)*2+7)/3);
         			continue = false
         		}
         };
@@ -50,6 +50,6 @@ class Recursion {
 }
 
 object Main extends App {
-    println("Last is: " + new Recursion().Start(10))
+    println("Last is: " + new Recursion().Start(10000))
 
 }

@@ -20,6 +20,9 @@ object Main {
       case "--tokens" :: args =>
         ctx = ctx.copy(doTokens = true)
         processOption(args)
+      case "-o" :: args =>
+        ctx = ctx.copy(doTailRec = true)
+        processOption(args)
       case "--symid" :: args =>
         ctx = ctx.copy(doSymbolIds = true)
         processOption(args)
@@ -64,6 +67,7 @@ object Main {
     println(" --print		prints the parsed program")
     println(" --symid   in combination with --print: prints all identifiers symbols")
     println(" --ast			prints out the AST")
+    println(" -o			optimize")
   }
 
   def mkTokens(ctx:Context):String = {
@@ -91,7 +95,18 @@ object Main {
       sys.exit(1);
     }
     if(ctx.doSymbolIds){
-      val tree = Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
+      var tree = Lexer.andThen(Parser).andThen(NameAnalysis).andThen(TypeChecking).run(ctx.file.get)(ctx);
+      if (ctx.doTailRec){
+        Reporter.terminateIfErrors();
+        Printer.doIds=true;
+        println("Before tail recursion elimination")
+        println("=================================")
+        println(Printer.apply(tree));
+        println()
+        println("After tail recursion elimination")
+        println("================================")
+        tree = TailRecElimination.run(tree)(ctx);
+      }
       Reporter.terminateIfErrors();
       Printer.doIds=true;
       println(Printer.apply(tree));
@@ -106,10 +121,11 @@ object Main {
       }else if(ctx.doPrintMain){
         println(Printer.apply(tree));
       }else{
-        NameAnalysis
-            .andThen(TypeChecking)
-            .andThen(TailRecElimination)
-            .andThen(CodeGeneration).run(tree)(ctx);
+          var pipe = NameAnalysis .andThen(TypeChecking)
+          if(ctx.doTailRec){
+            pipe= pipe.andThen(TailRecElimination)
+          }
+          pipe.andThen(CodeGeneration).run(tree)(ctx);
       }
     }
   }
