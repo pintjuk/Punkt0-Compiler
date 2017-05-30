@@ -1,3 +1,4 @@
+\label{implementation}
 We will first give a general overview of the approach we intend to use, for more details see section ref{sec:details}
 
 We intend to implement tail recursion elimination, as earlier mentioned, this will be done by introducing a new stage, after type checking, that transforms the AST. Changing tail recursive functions into functions with while loops.
@@ -28,6 +29,11 @@ By AST-transform, we mean a function that takes an AST and rewrites it into an o
 
 \subsection{Implementation Details}
 \label{sec:details}
+We followed the bulletpoints stated in Section \ref{implementation}. We found that the implementation was quite straightforward and did not 
+come across any major obsticles. Though the previous implementation of the compiler made the optimization a bit gruesome. This because, when creating
+new variables for example, we always had to assign the symbols and types manually. It would have been nice to have som automatization for this, 
+especially if more optimizations where to be implemented.
+
 Describe all non-obvious tricks you used. Tell us what you thought was hard and
 why. If it took you time to figure out the solution to a problem, it probably
 means it wasn't easy and you should definitely describe the solution in detail
