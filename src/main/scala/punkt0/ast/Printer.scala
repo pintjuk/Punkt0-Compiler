@@ -5,6 +5,7 @@ import Trees._
 
 object Printer {
   var doIds=false;
+  var doTypes=false;
   def endl(indent:Int ):String = "\n  "+"  "*indent
   def apply(t: Tree ):String = apply(t, 0)
   def apply(t: Tree, indent:Int ): String = {
@@ -80,13 +81,16 @@ object Printer {
         var str =  v.value 
         if(doIds){
           str= str + "#" + v.symString;
-          try { str = str+ ":"+v.getType }
-          catch { case x:RuntimeException=> }
+          if (doTypes) {
+            try { str = str + ":"+v.getType }
+            catch { case x:RuntimeException=> }
+          }
         } 
         str
       }
-    	case v:This => var str = "this"+  ( if(doIds) "#" + v.symString  + ":"+v.getType
-                                    else "" ) ; str;
+    	case v:This => var str = "this"+  ( if(doIds) "#" + v.symString  +  (if (doIds) ":"+v.getType
+                                                                             else "")
+                                            else "" ) ; str;
     	case v:Null => var str = "null"; str;
     	case v:New => var str = "new " + Printer(v.tpe) + "()"; str;
     	case v:Not => var str = "!" + "(" + Printer(v.expr) + ")"; str;
