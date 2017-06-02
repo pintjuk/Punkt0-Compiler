@@ -15,22 +15,7 @@ Such a transformation goes through the following steps:
     \item On all branches of the last expression that did not invoke a recursive call, add an assigment to the status variable to exit the loop.
 \end{enumerate}
 
-Bellow we have an example of a tailrecusive program that we have not optimized. When running this program it will result in a stackoverflow due to the vast amount of methodcalls.
-\begin{lstlisting}
-class OverflowPlease {
-  def makeZero( i:Int):Int = {
-    if (i==0){
-      i
-    }else{
-      this.makeZero(i+1)
-    }
-  }
-}
-
-object Main extends App {
-  println(new OverflowPlease().makeZero(5))
-}
-\end{lstlisting}
+If we look at the example for section \ref{examples} we have a tail call recursion example with a class called OverflowPlease. When running this example without our optimization, the code results in a stackoverflow.  
 
 The code we can see bellow is the a printed version of the previous program, but here we have put the code throught our tail recursion elimination opimization. We can see that the methodcall now have been replaced by a while loop. We can also observe the added variables that have been intoduced to be used instead of the methods arguments. Note that these have identification values starting with '\_'. This is because '\_' is not allowed as the starting char of an identifier making it impossible to create a duplication of an identifier since the code at this stage have already gone through the name analysis phase. 
 \begin{lstlisting}
