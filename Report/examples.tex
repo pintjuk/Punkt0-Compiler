@@ -38,7 +38,7 @@ class Helper {
 }
 \end{lstlisting}
 
-\subsection{Recursion on trees}
+\subsection{Recursion on Trees}
 
 Recursion on tree structures is interesting because in binary trees we need to recourse on the left and right subtrees, but only the one of the recursive calls may be in the tail position. Still removing one of the recursive calls is better then none, especially if the tree tends to be unbalanced.
 
@@ -74,7 +74,7 @@ class TreeHelper {
 }
 \end{lstlisting}
 
-\subsection{Co-recursive tail calls}
+\subsection{Co-recursive Tail Calls}
 \label{sec:corecursionexample}
 
 Here is an example of a more general problem that we do not initially intend to handle. Two methods \texttt{isEven(Int)} and \texttt{isOdd(Int)} use tail calls to each other to determine if the input method is odd or even.
@@ -95,7 +95,7 @@ class numbers {
 \end{lstlisting}
 
 
-\subsection{tail recursion in a while expression}
+\subsection{Tail Recursion in a While Expression}
 
 We do not intend to handle tail recursion in while expressions.
 
