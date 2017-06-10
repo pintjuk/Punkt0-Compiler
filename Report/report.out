@@ -1,0 +1,9 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Examples}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Recursion on Trees}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Co-recursive Tail Calls}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Tail Recursion in a While Expression}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Implementation}{}% 6
+\BOOKMARK [2][-]{subsection.3.1}{Terminalogy and Background}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.2}{Implementation Details}{section.3}% 8
+\BOOKMARK [1][-]{section.4}{Possible Extensions}{}% 9

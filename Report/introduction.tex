@@ -1,5 +1,5 @@
-We chose to implement the Tail-call optimization. However general Tail-call elemination would be a complex task in JVM so we inted to start out by only implementing the sub problem of Tail-recursion optimization.
+We chose to implement the Tail-call optimization \cite{Lab7}. However general Tail-call elimination would be a complex task in JVM so we intend to start out by only implementing the sub problem of Tail-recursion optimization. \cite{WinNT}
 
-This allows us to focus on solving the problem without any changes to the existing compiler stages. We belive that all we need to do is to introduce a new compiler stage for AST rewriting, and implement tail recursion elimination as an AST transformation: from a tail recursive method to a method with a while loop.
+This allows us to focus on solving the problem without any changes to the existing compiler stages. We believe that all we need to do is to introduce a new compiler stage for AST rewriting, and implement tail recursion elimination as an AST transformation: from a tail recursive method to a method with a while loop.
 
-This stage will have to be executed after the type checking phase, seeing as having the method symbols attached to method call expressions would be helpful.
+This stage will have to be executed after the type checking phase, as having the method symbols attached to method call expressions would be helpful.
