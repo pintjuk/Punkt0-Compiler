@@ -45,7 +45,8 @@ to print ast before and after tail recursion optimization:
 
 to execute your compiled Punkt0 program:
 
-`` cd <outdir>
-
-   java Main ``
+```bash 
+cd <outdir>
+java Main 
+```
 
