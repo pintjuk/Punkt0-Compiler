@@ -4,7 +4,7 @@
 __Authors:__ *Daniil Pintjuk, Kim Börk*
 
 
-Final Product of Compiler Construction labs 2 through 7
+Copiles a subset of Scala (Punkt0) to JVM bytecode.
 
 ## How to build
 1. install JDK or java runtime
